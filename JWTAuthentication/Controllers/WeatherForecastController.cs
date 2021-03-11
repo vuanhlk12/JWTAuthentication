@@ -2,12 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using JWTAuthentication.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 
 namespace JWTAuthentication.Controllers
 {
@@ -16,6 +21,8 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
     {
+        private readonly UserManager<ApplicationUser> userManager;
+
         private static readonly string[] Summaries = new[]
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -23,9 +30,10 @@ namespace JWTAuthentication.Controllers
 
         private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, UserManager<ApplicationUser> userManager)
         {
             _logger = logger;
+            this.userManager = userManager;
         }
 
         [Authorize(Roles = UserRoles.Admin)]
@@ -60,8 +68,10 @@ namespace JWTAuthentication.Controllers
 
         [Authorize]
         [HttpGet]
-        public IEnumerable<WeatherForecast> GetData()
+        public async Task<IEnumerable<WeatherForecast>> GetData()
         {
+            var UserName = User.Identity.Name;
+            var user = await userManager.FindByNameAsync(UserName);
             var rng = new Random();
             return Enumerable.Range(1, 1).Select(index => new WeatherForecast
             {

@@ -63,16 +63,17 @@ namespace JWTAuthentication.Controllers
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
                     expiration = token.ValidTo,
-                    role = userRoles,
                     userInfo = new { 
                         id = user.Id,
+                        userName = user.UserName,
                         dateOfBirth = user.DateOfBirth,
                         email = user.Email,
                         gender = user.Gender,
                         firstName = user.FirstName,
                         lastName = user.LastName,
                         phone = user.PhoneNumber,
-                        profilePhoto = user.ProfilePhoto
+                        profilePhoto = user.ProfilePhoto,
+                        role = userRoles
                     }
                 });;
             }
@@ -179,7 +180,24 @@ namespace JWTAuthentication.Controllers
             {
                 await userManager.AddToRoleAsync(user, UserRoles.Seller);
             }
-            return Ok(new Response { Status = "Success", Message = $"User {UserName}: Seller permission granted!" });
+            return Ok(new Response { Status = "Success", Message = $"User '{UserName}': Seller permission granted!" });
+        }
+
+        [Authorize(Roles = UserRoles.Admin)]
+        [HttpPost("admin/RemoveSellerPermisson")]
+        public async Task<IActionResult> RemoveSellerPermisson([FromBody] string UserName)
+        {
+            var user = await userManager.FindByNameAsync(UserName);
+            if (user == null)
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User not exists!" });
+
+            await CreateRoleIfNotExist();
+
+            if (await roleManager.RoleExistsAsync(UserRoles.Seller))
+            {
+                await userManager.RemoveFromRoleAsync(user, UserRoles.Seller);
+            }
+            return Ok(new Response { Status = "Success", Message = $"User '{UserName}': Seller permission removed!" });
         }
 
         public async Task CreateRoleIfNotExist()

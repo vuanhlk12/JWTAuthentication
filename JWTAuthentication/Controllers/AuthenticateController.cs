@@ -1,4 +1,5 @@
 ﻿using JWTAuthentication.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -151,6 +152,23 @@ namespace JWTAuthentication.Controllers
             return Ok(new Response { Status = "Success", Message = "Manager created successfully!" });
         }
 
+        [Authorize(Roles = UserRoles.Admin)]
+        [HttpPost("admin/GrantSellerPermisson")]
+        public async Task<IActionResult> GrantSellerPermisson([FromBody] string UserName)
+        {
+            var user = await userManager.FindByNameAsync(UserName);
+            if (user == null)
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User not exists!" });
+
+            await CreateRoleIfNotExist();
+
+            if (await roleManager.RoleExistsAsync(UserRoles.Seller))
+            {
+                await userManager.AddToRoleAsync(user, UserRoles.Seller);
+            }
+            return Ok(new Response { Status = "Success", Message = $"User {UserName}: Seller permission granted!" });
+        }
+
         public async Task CreateRoleIfNotExist()
         {
             if (!await roleManager.RoleExistsAsync(UserRoles.Admin))
@@ -159,6 +177,8 @@ namespace JWTAuthentication.Controllers
                 await roleManager.CreateAsync(new IdentityRole(UserRoles.Manager));
             if (!await roleManager.RoleExistsAsync(UserRoles.User))
                 await roleManager.CreateAsync(new IdentityRole(UserRoles.User));
+            if (!await roleManager.RoleExistsAsync(UserRoles.Seller))
+                await roleManager.CreateAsync(new IdentityRole(UserRoles.Seller));
         }
     }
 }

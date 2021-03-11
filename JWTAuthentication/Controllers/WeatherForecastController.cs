@@ -16,7 +16,7 @@ using System.Text;
 
 namespace JWTAuthentication.Controllers
 {
-    
+
     [ApiController]
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
@@ -66,14 +66,33 @@ namespace JWTAuthentication.Controllers
             .ToArray();
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<IEnumerable<WeatherForecast>> GetData()
+        {
+            try
+            {
+                var UserName = User.Identity.Name;
+                var user = await userManager.FindByNameAsync(UserName);
+            }
+            catch { }
+            var rng = new Random();
+            return Enumerable.Range(1, 1).Select(index => new WeatherForecast
+            {
+                Date = DateTime.Now.AddDays(index),
+                TemperatureC = rng.Next(-20, 55),
+                Summary = Summaries[rng.Next(Summaries.Length)]
+            })
+            .ToArray();
+        }
+
+        [Authorize(Roles = UserRoles.Seller)]
+        [HttpGet("seller")]
+        public async Task<IEnumerable<WeatherForecast>> GetSeller()
         {
             var UserName = User.Identity.Name;
             var user = await userManager.FindByNameAsync(UserName);
             var rng = new Random();
-            return Enumerable.Range(1, 1).Select(index => new WeatherForecast
+            return Enumerable.Range(1, 4).Select(index => new WeatherForecast
             {
                 Date = DateTime.Now.AddDays(index),
                 TemperatureC = rng.Next(-20, 55),

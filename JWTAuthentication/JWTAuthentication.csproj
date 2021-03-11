@@ -6,6 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20210225054509_Initial.cs" />
+    <Compile Remove="Migrations\20210225054509_Initial.Designer.cs" />
+    <Compile Remove="Migrations\20210311064933_Initial2.cs" />
+    <Compile Remove="Migrations\20210311064933_Initial2.Designer.cs" />
+    <Compile Remove="Migrations\20210311071251_add_gender.cs" />
+    <Compile Remove="Migrations\20210311071251_add_gender.Designer.cs" />
+    <Compile Remove="Migrations\20210311071436_add_gender.cs" />
+    <Compile Remove="Migrations\20210311071436_add_gender.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.5" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.5" />

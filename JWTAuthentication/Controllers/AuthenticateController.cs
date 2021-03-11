@@ -63,8 +63,18 @@ namespace JWTAuthentication.Controllers
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
                     expiration = token.ValidTo,
-                    role = userRoles
-                });
+                    role = userRoles,
+                    userInfo = new { 
+                        id = user.Id,
+                        dateOfBirth = user.DateOfBirth,
+                        email = user.Email,
+                        gender = user.Gender,
+                        firstName = user.FirstName,
+                        lastName = user.LastName,
+                        phone = user.PhoneNumber,
+                        profilePhoto = user.ProfilePhoto
+                    }
+                });;
             }
             return Unauthorized();
         }
@@ -81,7 +91,8 @@ namespace JWTAuthentication.Controllers
             {
                 Email = model.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.Username
+                UserName = model.Username,
+                Gender = model.Gender
             };
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
@@ -108,7 +119,8 @@ namespace JWTAuthentication.Controllers
             {
                 Email = model.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.Username
+                UserName = model.Username,
+                Gender = model.Gender
             };
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
@@ -136,7 +148,8 @@ namespace JWTAuthentication.Controllers
             {
                 Email = model.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.Username
+                UserName = model.Username,
+                Gender = model.Gender
             };
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)

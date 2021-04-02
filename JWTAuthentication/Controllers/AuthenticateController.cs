@@ -34,7 +34,15 @@ namespace JWTAuthentication.Controllers
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             var user = await userManager.FindByNameAsync(model.Account);
-            if (user != null && await userManager.CheckPasswordAsync(user, model.Password))
+            if (user == null)
+            {
+                return Ok(new
+                {
+                    code = 401,
+                    message = "User không tồn tại"
+                });
+            }
+            if (await userManager.CheckPasswordAsync(user, model.Password))
             {
                 var userRoles = await userManager.GetRolesAsync(user);
 
@@ -61,9 +69,12 @@ namespace JWTAuthentication.Controllers
 
                 return Ok(new
                 {
+                    code = 200,
+                    message = "Thành công",
                     token = new JwtSecurityTokenHandler().WriteToken(token),
                     expiration = token.ValidTo,
-                    userInfo = new { 
+                    userInfo = new
+                    {
                         id = user.Id,
                         userName = user.UserName,
                         dateOfBirth = user.DateOfBirth,
@@ -75,9 +86,13 @@ namespace JWTAuthentication.Controllers
                         profilePhoto = user.ProfilePhoto,
                         role = userRoles
                     }
-                });;
+                }); ;
             }
-            return Unauthorized();
+            return Ok(new
+            {
+                code = 1200,
+                message = "Thông tin đăng nhập sai"
+            });
         }
 
         [HttpPost]
@@ -86,18 +101,23 @@ namespace JWTAuthentication.Controllers
         {
             var userExists = await userManager.FindByNameAsync(model.Account);
             if (userExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists!" });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Tài khoản đã tồn tại" });
 
             ApplicationUser user = new ApplicationUser()
             {
                 Email = model.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
                 UserName = model.Account,
-                Gender = model.Gender
+                Gender = model.Gender,
+                PhoneNumber = model.PhoneNumber,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                DateOfBirth = model.DateOfBirth
+
             };
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, Message = "Thông tin tạo tài khoản không hợp lệ, vui lòng kiểm tra lại" });
 
             await CreateRoleIfNotExist();
 
@@ -105,7 +125,7 @@ namespace JWTAuthentication.Controllers
             {
                 await userManager.AddToRoleAsync(user, UserRoles.User);
             }
-            return Ok(new Response { Status = "Success", Message = "User created successfully!" });
+            return Ok(new { code = 200, message = "Tạo user thành công" });
         }
 
         [HttpPost]
@@ -114,18 +134,22 @@ namespace JWTAuthentication.Controllers
         {
             var userExists = await userManager.FindByNameAsync(model.Account);
             if (userExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists!" });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Tài khoản đã tồn tại" });
 
             ApplicationUser user = new ApplicationUser()
             {
                 Email = model.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
                 UserName = model.Account,
-                Gender = model.Gender
+                Gender = model.Gender,
+                PhoneNumber = model.PhoneNumber,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                DateOfBirth = model.DateOfBirth
             };
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, Message = "Thông tin tạo tài khoản không hợp lệ, vui lòng kiểm tra lại" });
 
             await CreateRoleIfNotExist();
 
@@ -134,7 +158,7 @@ namespace JWTAuthentication.Controllers
                 await userManager.AddToRoleAsync(user, UserRoles.Admin);
             }
 
-            return Ok(new Response { Status = "Success", Message = "Admin created successfully!" });
+            return Ok(new { code = 200, message = "Tạo admin thành công" });
         }
 
         [HttpPost]
@@ -150,7 +174,11 @@ namespace JWTAuthentication.Controllers
                 Email = model.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
                 UserName = model.Account,
-                Gender = model.Gender
+                Gender = model.Gender,
+                PhoneNumber = model.PhoneNumber,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                DateOfBirth = model.DateOfBirth
             };
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)

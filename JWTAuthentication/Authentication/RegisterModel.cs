@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace JWTAuthentication.Authentication
 {
@@ -14,6 +15,10 @@ namespace JWTAuthentication.Authentication
         [Required(ErrorMessage = "Password is required")]
         public string Password { get; set; }
         public string Gender { get; set; }
+        public string PhoneNumber { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public DateTime DateOfBirth { get; set; }
 
     }
 }

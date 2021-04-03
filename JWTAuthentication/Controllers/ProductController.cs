@@ -23,11 +23,23 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class ProductController : ControllerBase
     {
+        [HttpGet("GetProductByCategoryID")]
         public List<ProductModel> GetProductByCategoryID(string CategoryID = null)
         {
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
             {
-                string query = $"SELECT * FROM Product WHERE CategoryID = '{CategoryID}'";
+                CategoryController category = new CategoryController();
+                List<CategoryModel> categories = category.GetCategoryAllChildList(CategoryID);
+                string keyStr = "";
+                keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
+                keyStr = "('" + keyStr + "')";
+
+                if (categories.Count == 0)
+                {
+                    keyStr = $"('{CategoryID}')";
+                }
+
+                string query = $"SELECT * FROM Product WHERE CategoryID IN {keyStr}";
                 List<ProductModel> products = conn.Query<ProductModel>(query).AsList();
                 return products;
             }

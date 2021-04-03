@@ -31,12 +31,15 @@ namespace JWTAuthentication.Controllers
                 CategoryController category = new CategoryController();
                 List<CategoryModel> categories = category.GetCategoryAllChildList(CategoryID);
                 string keyStr = "";
-                keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
-                keyStr = "('" + keyStr + "')";
 
                 if (categories.Count == 0)
                 {
                     keyStr = $"('{CategoryID}')";
+                }
+                else
+                {
+                    keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
+                    keyStr = "('" + keyStr + "')";
                 }
 
                 string query = $"SELECT * FROM Product WHERE CategoryID IN {keyStr}";

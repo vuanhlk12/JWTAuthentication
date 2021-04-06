@@ -48,6 +48,39 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [HttpGet("GetProductByCategoryIDbyRange")]
+        public List<ProductModel> GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    CategoryController category = new CategoryController();
+                    List<CategoryModel> categories = category.GetCategoryAllChildList(CategoryID);
+                    string keyStr = "";
+
+                    if (categories.Count == 0)
+                    {
+                        keyStr = $"('{CategoryID}')";
+                    }
+                    else
+                    {
+                        keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
+                        keyStr = "('" + keyStr + "')";
+                    }
+
+                    string query = $"FROM Product WHERE CategoryID IN {keyStr}";
+                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page} AND {size * (page + 1)}";
+                    List<ProductModel> products = conn.Query<ProductModel>(query).AsList();
+                    return products;
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         [HttpGet("GetProductByID")]
         public ProductModel GetProductByID(string ProductID)
         {

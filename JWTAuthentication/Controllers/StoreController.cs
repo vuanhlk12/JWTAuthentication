@@ -15,6 +15,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.Data.SqlClient;
 using Dapper;
+using Microsoft.AspNetCore.Http;
 
 namespace JWTAuthentication.Controllers
 {
@@ -42,6 +43,24 @@ namespace JWTAuthentication.Controllers
                 string query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * FROM Store ) t WHERE RowNr BETWEEN {page * size} AND {(page + 1) * size}";
                 List<StoreModel> store = conn.Query<StoreModel>(query).AsList();
                 return store;
+            }
+        }
+
+        [HttpPost("AddStoreByUser")]
+        public ActionResult AddStoreByUser([FromBody] StoreModel Store)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"INSERT INTO Store (ID,Name,Detail,CreateTime,OwnerID,Approved) VALUES (N'{Guid.NewGuid()}', N'{Store.Name}', N'{Store.Detail}', '{DateTime.Now.ToString("yyyy-MM-dd")}', N'{Store.OwnerID}', 0); ";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = "Thêm cửa hàng thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
             }
         }
     }

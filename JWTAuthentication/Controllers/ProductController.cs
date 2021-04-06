@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using Microsoft.Data.SqlClient;
 using Dapper;
+using Microsoft.AspNetCore.Http;
 
 namespace JWTAuthentication.Controllers
 {
@@ -44,6 +45,42 @@ namespace JWTAuthentication.Controllers
             catch
             {
                 return null;
+            }
+        }
+
+        [HttpGet("GetProductByID")]
+        public ProductModel GetProductByID(string ProductID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"SELECT * FROM Product WHERE ID = '{ProductID}'";
+                    ProductModel products = conn.Query<ProductModel>(query).FirstOrDefault();
+                    return products;
+                }
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        [HttpPost("AddProductByStore")]
+        public ActionResult AddProductByStore([FromBody] ProductModel Product)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"INSERT INTO Product (ID,Name,Price,Color,[Size],Detail,Description,CategoryID,Discount,Quanlity,[Image],AddedTime,LastModify,StoreID,SoldQuanlity) VALUES (N'{Guid.NewGuid()}', N'{Product.Name}', {Product.Price}, N'{Product.Color}', N'{Product.Size}', N'{Product.Detail}', N'{Product.Description}', N'{Product.CategoryID}', {Product.Discount}, {Product.Quanlity}, N'{Product.Image}', '{DateTime.Now.ToString("yyyy-MM-dd")}', '{DateTime.Now.ToString("yyyy-MM-dd")}', N'{Product.StoreID}', 0); ";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = $"Thêm sản phẩm {Product.Name} thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
             }
         }
     }

@@ -26,62 +26,84 @@ namespace JWTAuthentication.Controllers
         [HttpGet("CategoryAllChildList")]
         public IActionResult GetCategory(string ParentID = null)
         {
-            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+            try
             {
-                string query = $"SELECT * FROM Category where id='{ParentID}'";
 
-                CategoryModel category = conn.Query<CategoryModel>(query).FirstOrDefault();
-                if (ParentID == null)
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    category = new CategoryModel();
+                    string query = $"SELECT * FROM Category where id='{ParentID}'";
+
+                    CategoryModel category = conn.Query<CategoryModel>(query).FirstOrDefault();
+                    if (ParentID == null)
+                    {
+                        category = new CategoryModel();
+                    }
+                    List<CategoryModel> a = GetCategoryAllChildList(ParentID);
+                    category.ChildList = a.BuildTree().ChildList;
+                    return Ok(new
+                    {
+                        code = 200,
+                        Category = category
+                    });
                 }
-                List<CategoryModel> a = GetCategoryAllChildList(ParentID);
-                category.ChildList = a.BuildTree().ChildList;
-                return Ok(new
-                {
-                    code = 200,
-                    Category = category
-                });
+            }
+            catch
+            {
+                return null;
             }
         }
 
         public List<CategoryModel> GetCategoryAllChildList(string ParentID = null)
         {
-            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+            try
             {
-                List<CategoryModel> ReturnList = new List<CategoryModel>();
-                string query = $"SELECT * FROM Category where parentid='{ParentID}'";
-                if (ParentID == null)
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    query = "SELECT * FROM Category where parentid is null";
-                }
-                var CategoryList = conn.Query<CategoryModel>(query).AsList();
-                ReturnList.AddRange(CategoryList);
-                if (CategoryList.Count > 0)
-                {
-                    foreach (CategoryModel category in CategoryList)
+                    List<CategoryModel> ReturnList = new List<CategoryModel>();
+                    string query = $"SELECT * FROM Category where parentid='{ParentID}'";
+                    if (ParentID == null)
                     {
-                        ReturnList.AddRange(GetCategoryAllChildList(category.Id));
+                        query = "SELECT * FROM Category where parentid is null";
                     }
+                    var CategoryList = conn.Query<CategoryModel>(query).AsList();
+                    ReturnList.AddRange(CategoryList);
+                    if (CategoryList.Count > 0)
+                    {
+                        foreach (CategoryModel category in CategoryList)
+                        {
+                            ReturnList.AddRange(GetCategoryAllChildList(category.Id));
+                        }
+                    }
+                    return ReturnList;
                 }
-                return ReturnList;
+            }
+            catch
+            {
+                return null;
             }
         }
 
         [HttpGet("CategoryChildList")]
         public List<CategoryModel> GetCategoryChildList(string ParentID = null)
         {
-            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+            try
             {
-                List<CategoryModel> ReturnList = new List<CategoryModel>();
-                string query = $"SELECT * FROM Category where parentid='{ParentID}'";
-                if (ParentID == null)
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    query = "SELECT * FROM Category where parentid is null";
+                    List<CategoryModel> ReturnList = new List<CategoryModel>();
+                    string query = $"SELECT * FROM Category where parentid='{ParentID}'";
+                    if (ParentID == null)
+                    {
+                        query = "SELECT * FROM Category where parentid is null";
+                    }
+                    var CategoryList = conn.Query<CategoryModel>(query).AsList();
+                    ReturnList.AddRange(CategoryList);
+                    return ReturnList;
                 }
-                var CategoryList = conn.Query<CategoryModel>(query).AsList();
-                ReturnList.AddRange(CategoryList);
-                return ReturnList;
+            }
+            catch
+            {
+                return null;
             }
         }
     }

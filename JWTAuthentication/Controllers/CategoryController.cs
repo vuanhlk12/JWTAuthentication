@@ -15,6 +15,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.Data.SqlClient;
 using Dapper;
+using Microsoft.AspNetCore.Http;
 
 namespace JWTAuthentication.Controllers
 {
@@ -49,7 +50,7 @@ namespace JWTAuthentication.Controllers
             }
             catch
             {
-                return null;
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra"});
             }
         }
 

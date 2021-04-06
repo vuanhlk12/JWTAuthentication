@@ -40,6 +40,7 @@ namespace JWTAuthentication.Controllers
         {
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
             {
+           
                 string query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * FROM Store ) t WHERE RowNr BETWEEN {page * size} AND {(page + 1) * size}";
                 List<StoreModel> store = conn.Query<StoreModel>(query).AsList();
                 return store;

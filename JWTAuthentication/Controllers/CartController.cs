@@ -31,7 +31,7 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string query = $"SELECT * FROM Cart where c.BuyerID = '{buyerID}'";
+                    string query = $"SELECT * FROM Cart where BuyerID = '{buyerID}'";
 
                     List<CartModel> cartQuerry = conn.Query<CartModel>(query).AsList();
 
@@ -57,7 +57,7 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string query = $"SELECT * FROM  where c.BuyerID = '{buyerID} ' and p.ID = '{productID}'";
+                    string query = $"SELECT * FROM  where BuyerID = '{buyerID} ' and ProductID = '{productID}'";
 
                     List<CartModel> cartQuerry = conn.Query<CartModel>(query).AsList();
 
@@ -75,17 +75,30 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+
         [HttpPost("AddProductToCart")]
         
-        public IActionResult AddToCart(CartModel cart)
+        public IActionResult AddToCart(string userID ,CartModel cart)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string query = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, ShippedTime, Quantity, OrderTime) VALUES(N'{Guid.NewGuid()}', N'{cart.BuyerID}', N'{cart.ProductID}',N'{cart.AddedTime}',N'{cart.Status}',N'{cart.ShippedTime}',N'{cart.Quanlity}',N'{cart.OrderTime}');";
-                    conn.Execute(query);
-                    return Ok(new { code = 200, message = $"Thêm vao gio hang thành công" });
+                    string checkExist = $"SELECT * FROM Cart where BuyerID ='${userID}' and ProductID = '${cart.ProductID}' ";
+                    string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, ShippedTime, Quantity, OrderTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}',N'{cart.Status}',NULL,N'{cart.Quanlity}',NULL);";
+                    string updateQuanity = $"UPDATE Cart SET Quanity = '${cart.Quanlity}, AddedTime = '${DateTime.Now.ToString("yyyy-MM-dd h:mm")}' WHERE BuyerID = '${userID}' AND ProductID = '${cart.ProductID}' ";
+                    List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
+                    if(cartQuerry.Count == 0)
+                    {
+                        conn.Execute(insertNewItem);
+                        return Ok(new { code = 204, message = $"Them gio hang thành công" });
+                    }
+                    else
+                    {
+                        conn.Execute(updateQuanity);
+                        return Ok(new { code = 204, message = $"Cap nhat gio hang thành công" });
+                    }
+                    
 
                 }
             }

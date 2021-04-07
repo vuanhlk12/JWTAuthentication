@@ -12,6 +12,7 @@ namespace JWTAuthentication.Authentication
         public DateTime ShippedTime { get; set; }
         public string Status { get; set; }
         public int Quanlity { get; set; }
+        public DateTime OrderTime { get; set; }
 
     }
 }

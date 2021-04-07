@@ -31,7 +31,7 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string query = $"SELECT * FROM Cart c LEFT JOIN Product p ON c.ProductID= p.ID where c.BuyerID = '{buyerID}'";
+                    string query = $"SELECT * FROM Cart where c.BuyerID = '{buyerID}'";
 
                     List<CartModel> cartQuerry = conn.Query<CartModel>(query).AsList();
 
@@ -50,14 +50,14 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpGet("ProductInCart")]
-        public IActionResult GetBuyerProductInCart(string buyerID,string productName)
+        public IActionResult GetBuyerProductInCart(string buyerID,string productID)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string query = $"SELECT * FROM Cart c LEFT JOIN Product p ON c.ProductID= p.ID where c.BuyerID = '{buyerID} ' and p.Name = '{productName}'";
+                    string query = $"SELECT * FROM  where c.BuyerID = '{buyerID} ' and p.ID = '{productID}'";
 
                     List<CartModel> cartQuerry = conn.Query<CartModel>(query).AsList();
 
@@ -72,6 +72,26 @@ namespace JWTAuthentication.Controllers
             catch
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra" });
+            }
+        }
+
+        [HttpPost("AddProductToCart")]
+        
+        public IActionResult AddToCart(CartModel cart)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, ShippedTime, Quantity, OrderTime) VALUES(N'{Guid.NewGuid()}', N'{cart.BuyerID}', N'{cart.ProductID}',N'{cart.AddedTime}',N'{cart.Status}',N'{cart.ShippedTime}',N'{cart.Quanlity}',N'{cart.OrderTime}');";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = $"Thêm vao gio hang thành công" });
+
+                }
+            }
+            catch(Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = e.Message });
             }
         }
     }

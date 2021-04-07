@@ -111,7 +111,34 @@ namespace JWTAuthentication.Controllers
                     else
                     {
                         conn.Execute(updateQuanity);
-                        return Ok(new { code = 204, message = $"Cap nhat gio hang thành công" });
+                        return Ok(new { code = 200, message = $"Cap nhat gio hang thành công" });
+                    }
+
+
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = e.Message });
+            }
+        }
+
+        [HttpDelete("DeleteFromCart")]
+        public IActionResult UserDeleteProduct(string userID, string productID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string checkExist = $"SELECT * FROM Cart where BuyerID = N'{userID}' and ProductID = N'{productID}' and Status = 'pending'";
+                    string deleteItem = $"DELETE FROM Cart where BuyerID = N'{userID}' and ProductID = N'{productID}' and Status = 'pending'";
+                    List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
+
+                    if (cartQuerry.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy mặt hàng trong giỏ" });
+                    else
+                    {
+                        conn.Execute(deleteItem);
+                        return Ok(new { code = 200, message = $"Xoa san pham thanh cong" });
                     }
 
                 }

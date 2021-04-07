@@ -31,7 +31,7 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string query = $"SELECT * FROM Cart c LEFT JOIN Product p ON c.ProductID= p.ID where c.BuyerID = '{buyerID}'";
+                    string query = $"SELECT * FROM Cart where BuyerID = '{buyerID}'";
 
                     List<CartModel> cartQuerry = conn.Query<CartModel>(query).AsList();
 
@@ -50,14 +50,14 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpGet("ProductInCart")]
-        public IActionResult GetBuyerProductInCart(string buyerID,string productName)
+        public IActionResult GetBuyerProductInCart(string buyerID,string productID)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string query = $"SELECT * FROM Cart c LEFT JOIN Product p ON c.ProductID= p.ID where c.BuyerID = '{buyerID} ' and p.Name = '{productName}'";
+                    string query = $"SELECT * FROM  where BuyerID = '{buyerID} ' and ProductID = '{productID}'";
 
                     List<CartModel> cartQuerry = conn.Query<CartModel>(query).AsList();
 
@@ -72,6 +72,39 @@ namespace JWTAuthentication.Controllers
             catch
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra" });
+            }
+        }
+
+
+        [HttpPost("AddProductToCart")]
+        
+        public IActionResult AddToCart(string userID ,CartModel cart)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string checkExist = $"SELECT * FROM Cart where BuyerID ='${userID}' and ProductID = '${cart.ProductID}' ";
+                    string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, ShippedTime, Quantity, OrderTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}',N'{cart.Status}',NULL,N'{cart.Quanlity}',NULL);";
+                    string updateQuanity = $"UPDATE Cart SET Quanity = '${cart.Quanlity}, AddedTime = '${DateTime.Now.ToString("yyyy-MM-dd h:mm")}' WHERE BuyerID = '${userID}' AND ProductID = '${cart.ProductID}' ";
+                    List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
+                    if(cartQuerry.Count == 0)
+                    {
+                        conn.Execute(insertNewItem);
+                        return Ok(new { code = 204, message = $"Them gio hang thành công" });
+                    }
+                    else
+                    {
+                        conn.Execute(updateQuanity);
+                        return Ok(new { code = 204, message = $"Cap nhat gio hang thành công" });
+                    }
+                    
+
+                }
+            }
+            catch(Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = e.Message });
             }
         }
     }

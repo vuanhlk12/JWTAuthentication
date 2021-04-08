@@ -14,5 +14,7 @@ namespace JWTAuthentication.Authentication
         public int Quantity { get; set; }
         public DateTime OrderTime { get; set; }
 
+        public ProductModel Product { get; set; }
+
     }
 }

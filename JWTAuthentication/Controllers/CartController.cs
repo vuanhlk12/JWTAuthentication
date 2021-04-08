@@ -79,31 +79,24 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpPost("AddProductToCart")]
-<<<<<<< Updated upstream
 
-        public IActionResult AddToCart(string userID, CartModel cart)
-=======
+
         public IActionResult AddToCart(string userID ,CartModel cart)
->>>>>>> Stashed changes
+
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-<<<<<<< Updated upstream
+
                     string checkExist = $"SELECT * FROM Cart where BuyerID ='${userID}' and ProductID = '${cart.ProductID}' ";
                     string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, ShippedTime, Quantity, OrderTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}',N'{cart.Status}',NULL,N'{cart.Quantity}',NULL);";
                     string updateQuanity = $"UPDATE Cart SET Quanity = '${cart.Quantity}, AddedTime = '${DateTime.Now.ToString("yyyy-MM-dd h:mm")}' WHERE BuyerID = '${userID}' AND ProductID = '${cart.ProductID}' ";
                     List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
-                    if (cartQuerry.Count == 0)
-=======
-                    string checkExist = $"SELECT * FROM Cart where BuyerID = N'{userID}' and ProductID = N'{cart.ProductID}' ";
-                    string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, ShippedTime, Quantity, OrderTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}',N'{cart.Status}',NULL,N'{cart.Quantity}',NULL);";
-                    string updateQuanity = $"UPDATE Cart SET Quantity = N'{cart.Quantity}', AddedTime = N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}' WHERE BuyerID = N'{userID}' AND ProductID = N'{cart.ProductID}' ";
-                    List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
-                
+    
+               
                     if(cartQuerry.Count == 0)
->>>>>>> Stashed changes
+
                     {
                         conn.Execute(insertNewItem);
                         return Ok(new { code = 200, message = $"Them gio hang thành công" });
@@ -149,20 +142,22 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+
+        [HttpGet("ConfirmPayment")]
         public IActionResult UserConfirmPayment(string userID)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string consumePending = $"SELECT * FROM Cart where BuyerID = N'{userID}' and Status = 'pending' ";
-                   
-                    List<CartModel> cartQuerry = conn.Query<CartModel>(consumePending).AsList();
-                    
-                    if(cartQuerry.Count > 0)
-                    {
-                        string listItem = JsonSerializer.Serialize(cartQuerry);
-                    }
+                    string consumePending = $"SELECT * FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}' and c.Status = 'pending' ";
+
+                    var query = conn.Query<CartModel, ProductModel, CartModel>(consumePending, (cart, product) => {
+                        cart.Product = product;
+                        return cart;
+                    },splitOn : "ProductID").ToList();
+
+                    return Ok(new { code = 200, data = query });
 
                 }
             }

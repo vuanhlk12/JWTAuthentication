@@ -18,6 +18,7 @@ using System.Text;
 using Microsoft.Data.SqlClient;
 using Dapper;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 
 namespace JWTAuthentication.Controllers
 {
@@ -25,7 +26,7 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class CartController : ControllerBase
     {
-        [HttpGet("Cart")]
+        [HttpGet("CartList")]
         public IActionResult GetBuyerCart(string buyerID)
         {
             try
@@ -90,7 +91,7 @@ namespace JWTAuthentication.Controllers
                 {
 
                     string checkExist = $"SELECT * FROM Cart where BuyerID ='${userID}' and ProductID = '${cart.ProductID}' ";
-                    string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, ShippedTime, Quantity, OrderTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}',N'{cart.Status}',NULL,N'{cart.Quantity}',NULL);";
+                    string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, Quantity) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}',N'{cart.Status}',N'{cart.Quantity}');";
                     string updateQuanity = $"UPDATE Cart SET Quanity = '${cart.Quantity}, AddedTime = '${DateTime.Now.ToString("yyyy-MM-dd h:mm")}' WHERE BuyerID = '${userID}' AND ProductID = '${cart.ProductID}' ";
                     List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
     
@@ -144,21 +145,33 @@ namespace JWTAuthentication.Controllers
 
 
         [HttpGet("ConfirmPayment")]
-        public IActionResult UserConfirmPayment(string userID)
+        public   IActionResult UserConfirmPayment(string userID)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string consumePending = $"SELECT * FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}' and c.Status = 'pending' ";
-
-                    var query = conn.Query<CartModel, ProductModel, CartModel>(consumePending, (cart, product) => {
+                    string consumePending = $"SELECT c.buyerID, c.quantity,  c.status, c.ProductID, p.ID, p.Name, p.Price, p.Discount FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}' and c.Status = 'pending' ";
+                    string changeStatus = $"UPDATE Cart SET Status = 'delivering' where BuyerID =  N'{userID}' AND Status = 'pending' ";
+                    var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(consumePending, (cart, product) => {
                         cart.Product = product;
                         return cart;
-                    },splitOn : "ProductID").ToList();
-
-                    return Ok(new { code = 200, data = query });
-
+                    }, splitOn: "ID").Result.ToList();
+                    //update tất cả các order từ pending->delivering
+                   // conn.Execute(changeStatus);
+                    if(query.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có mặt hàng trong giỏ" });
+                    else
+                    {
+                        string listItem = JsonConvert.SerializeObject(query);
+                        int total = 0;
+                        foreach (CartModel c in query)
+                        {
+                            total += c.Quantity * c.Product.Price * c.Product.Discount;
+                        }
+                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}', N'{DateTime.Now.AddDays(7).ToString("yyyy-MM-dd h:mm")}' )";
+                        conn.Execute(createBill);
+                        return Ok(new { code = 200, message = listItem });
+                    }
                 }
             }
             catch (Exception e)

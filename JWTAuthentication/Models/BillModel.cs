@@ -8,7 +8,7 @@ namespace JWTAuthentication.Authentication
        public string ListItem { get; set; }
        public int Total { get; set; }
        public string OrderTime { get; set; }
-       
 
+        public DateTime ShipTime { get; set; }
     }
 }

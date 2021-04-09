@@ -15,6 +15,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.Data.SqlClient;
 using Dapper;
+using Microsoft.AspNetCore.Http;
 
 namespace JWTAuthentication.Controllers
 {
@@ -24,7 +25,7 @@ namespace JWTAuthentication.Controllers
     public class UserController : ControllerBase
     {
         [HttpGet("GetUserByUserID")]
-        public UserModel GetUserByUserID(string UserID = null)
+        public IActionResult GetUserByUserID(string UserID = null)
         {
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
             {
@@ -32,11 +33,11 @@ namespace JWTAuthentication.Controllers
                 {
                     string query = $"SELECT * FROM AspNetUsers WHERE Id = '{UserID}'";
                     UserModel user = conn.Query<UserModel>(query).AsList().FirstOrDefault();
-                    return user;
+                    return Ok(new { code = 200, data = user });
                 }
-                catch
+                catch (Exception ex)
                 {
-                    return null;
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
                 }
             }
         }

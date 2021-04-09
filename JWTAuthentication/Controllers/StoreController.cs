@@ -25,29 +25,43 @@ namespace JWTAuthentication.Controllers
     public class StoreController : ControllerBase
     {
         [HttpGet("GetStoreByUserID")]
-        public StoreModel GetStoreByUserID(string UserID = null)
+        public IActionResult GetStoreByUserID(string UserID = null)
         {
-            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+            try
             {
-                string query = $"SELECT * FROM Store WHERE OwnerID = '{UserID}'";
-                StoreModel store = conn.Query<StoreModel>(query).AsList().FirstOrDefault();
-                return store;
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"SELECT * FROM Store WHERE OwnerID = '{UserID}'";
+                    StoreModel store = conn.Query<StoreModel>(query).AsList().FirstOrDefault();
+                    return Ok(new { code = 200, store = store });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
             }
         }
 
         [HttpGet("GetStoreByRange")]
-        public List<StoreModel> GetStoreByRange(int size, int page)
+        public IActionResult GetStoreByRange(int size, int page)
         {
-            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+            try
             {
-                string query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * FROM Store ) t WHERE RowNr BETWEEN {page * size} AND {(page + 1) * size}";
-                List<StoreModel> store = conn.Query<StoreModel>(query).AsList();
-                return store;
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * FROM Store ) t WHERE RowNr BETWEEN {page * size} AND {(page + 1) * size}";
+                    List<StoreModel> store = conn.Query<StoreModel>(query).AsList();
+                    return Ok(new { code = 200, store = store });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
             }
         }
 
         [HttpPost("AddStoreByUser")]
-        public ActionResult AddStoreByUser([FromBody] StoreModel Store)
+        public IActionResult AddStoreByUser([FromBody] StoreModel Store)
         {
             try
             {

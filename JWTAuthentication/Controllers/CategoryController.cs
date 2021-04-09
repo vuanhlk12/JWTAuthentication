@@ -15,6 +15,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.Data.SqlClient;
 using Dapper;
+using Microsoft.AspNetCore.Http;
 
 namespace JWTAuthentication.Controllers
 {
@@ -47,9 +48,9 @@ namespace JWTAuthentication.Controllers
                     });
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                return null;
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
             }
         }
 
@@ -84,7 +85,7 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpGet("CategoryChildList")]
-        public List<CategoryModel> GetCategoryChildList(string ParentID = null)
+        public IActionResult GetCategoryChildList(string ParentID = null)
         {
             try
             {
@@ -98,12 +99,12 @@ namespace JWTAuthentication.Controllers
                     }
                     var CategoryList = conn.Query<CategoryModel>(query).AsList();
                     ReturnList.AddRange(CategoryList);
-                    return ReturnList;
+                    return Ok(new { code = 200, message = ReturnList });
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                return null;
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
             }
         }
     }

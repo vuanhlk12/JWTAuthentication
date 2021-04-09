@@ -17,7 +17,38 @@ namespace JWTAuthentication.Controllers
     public class ProductController : ControllerBase
     {
         [HttpGet("GetProductByCategoryID")]
-        public List<ProductModel> GetProductByCategoryID(string CategoryID = null)
+        public IActionResult GetProductByCategoryID(string CategoryID = null)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    CategoryController category = new CategoryController();
+                    List<CategoryModel> categories = category.GetCategoryAllChildList(CategoryID);
+                    string keyStr = "";
+
+                    if (categories.Count == 0)
+                    {
+                        keyStr = $"('{CategoryID}')";
+                    }
+                    else
+                    {
+                        keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
+                        keyStr = "('" + keyStr + "')";
+                    }
+
+                    string query = $"SELECT * FROM Product WHERE CategoryID IN {keyStr}";
+                    List<ProductModel> products = conn.Query<ProductModel>(query).AsList();
+                    return Ok(new { code = 200, message = products });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
+            }
+        }
+
+        public List<ProductModel> GetProductByCategoryID1(string CategoryID = null)
         {
             try
             {
@@ -42,14 +73,14 @@ namespace JWTAuthentication.Controllers
                     return products;
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 return null;
             }
         }
 
         [HttpGet("GetProductByCategoryIDbyRange")]
-        public List<ProductModel> GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null)
+        public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null)
         {
             try
             {
@@ -72,17 +103,17 @@ namespace JWTAuthentication.Controllers
                     string query = $"FROM Product WHERE CategoryID IN {keyStr}";
                     query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page} AND {size * (page + 1)}";
                     List<ProductModel> products = conn.Query<ProductModel>(query).AsList();
-                    return products;
+                    return Ok(new { code = 200, message = products });
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                return null;
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
             }
         }
 
         [HttpGet("GetProductByID")]
-        public ProductModel GetProductByID(string ProductID)
+        public IActionResult GetProductByID(string ProductID)
         {
             try
             {
@@ -90,12 +121,12 @@ namespace JWTAuthentication.Controllers
                 {
                     string query = $"SELECT * FROM Product WHERE ID = '{ProductID}'";
                     ProductModel products = conn.Query<ProductModel>(query).FirstOrDefault();
-                    return products;
+                    return Ok(new { code = 200, message = products });
                 }
             }
             catch (Exception ex)
             {
-                return null;
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
             }
         }
 

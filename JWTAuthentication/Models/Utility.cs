@@ -21,7 +21,7 @@ namespace JWTAuthentication.Authentication
         {
             if (nodes.Count == 0)
             {
-                List<ProductModel> products = new ProductController().GetProductByCategoryID(root.Id);
+                List<ProductModel> products = new ProductController().GetProductByCategoryID1(root.Id);
                 root.ProductsList.AddRange(products);
                 return root;
             }

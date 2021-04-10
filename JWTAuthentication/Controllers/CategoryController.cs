@@ -91,15 +91,17 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    List<CategoryModel> ReturnList = new List<CategoryModel>();
+                    string parentQuery = $"SELECT * FROM Category where id='{ParentID}'";
+                    CategoryModel Parent = conn.Query<CategoryModel>(parentQuery).FirstOrDefault();
+
                     string query = $"SELECT * FROM Category where parentid='{ParentID}'";
                     if (ParentID == null)
                     {
                         query = "SELECT * FROM Category where parentid is null";
                     }
                     var CategoryList = conn.Query<CategoryModel>(query).AsList();
-                    ReturnList.AddRange(CategoryList);
-                    return Ok(new { code = 200, message = ReturnList });
+                    Parent.ChildList = CategoryList;
+                    return Ok(new { code = 200, message = Parent });
                 }
             }
             catch (Exception ex)

@@ -36,14 +36,23 @@ namespace JWTAuthentication.Controllers
                         keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
                         keyStr = "('" + keyStr + "')";
                     }
-                    string categoryQuery = $"SELECT  * FROM Category where ID ='{CategoryID}'";
-                    CategoryModel category = conn.Query<CategoryModel>(categoryQuery).FirstOrDefault();
 
+                    CategoryModel category = new CategoryModel();
+
+                    if (CategoryID != null)
+                    {
+                        string categoryQuery = $"SELECT  * FROM Category where ID ='{CategoryID}'";
+                        category = conn.Query<CategoryModel>(categoryQuery).FirstOrDefault();
+                    }
 
                     string query = $"SELECT * FROM Product WHERE CategoryID IN {keyStr}";
                     List<ProductModel> products = conn.Query<ProductModel>(query).AsList();
+
+                    string countQuery = $"SELECT COUNT(*) FROM Product WHERE CategoryID IN {keyStr}";
+                    int count = conn.Query<int>(countQuery).FirstOrDefault();
+
                     category.ProductsList = products;
-                    return Ok(new { code = 200, message = category });
+                    return Ok(new { code = 200, total = count, message = category });
                 }
             }
             catch (Exception ex)
@@ -104,15 +113,23 @@ namespace JWTAuthentication.Controllers
                         keyStr = "('" + keyStr + "')";
                     }
 
-                    string categoryQuery = $"SELECT  * FROM Category where ID ='{CategoryID}'";
-                    CategoryModel category = conn.Query<CategoryModel>(categoryQuery).FirstOrDefault();
+                    CategoryModel category = new CategoryModel();
+
+                    if (CategoryID != null)
+                    {
+                        string categoryQuery = $"SELECT  * FROM Category where ID ='{CategoryID}'";
+                        category = conn.Query<CategoryModel>(categoryQuery).FirstOrDefault();
+                    }
 
                     string query = $"FROM Product WHERE CategoryID IN {keyStr}";
                     query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page} AND {size * (page + 1)}";
                     List<ProductModel> products = conn.Query<ProductModel>(query).AsList();
 
-                    category.ProductsList = products;
-                    return Ok(new { code = 200, message = category });
+                    string countQuery = $"SELECT COUNT(*) FROM Product WHERE CategoryID IN {keyStr}";
+                    int count = conn.Query<int>(countQuery).FirstOrDefault();
+
+                    category.ProductsList = products ?? new List<ProductModel>();
+                    return Ok(new { code = 200, total = count, message = category });
                 }
             }
             catch (Exception ex)

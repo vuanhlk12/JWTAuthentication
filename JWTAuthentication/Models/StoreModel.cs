@@ -10,6 +10,8 @@ namespace JWTAuthentication.Authentication
         public string Detail { get; set; }
         public DateTime CreateTime { get; set; }
         public string OwnerID { get; set; }
-        public ApplicationUser Owner { get; set; }
+        public UserModel Owner { get; set; }
+
+        public List<UserModel> UsersFollow { get; set; }
     }
 }

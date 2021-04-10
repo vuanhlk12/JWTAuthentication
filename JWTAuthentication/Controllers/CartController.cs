@@ -170,7 +170,7 @@ namespace JWTAuthentication.Controllers
                         }
                         string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}', N'{DateTime.Now.AddDays(7).ToString("yyyy-MM-dd h:mm")}' )";
                         conn.Execute(createBill);
-                        return Ok(new { code = 200, message = listItem });
+                        return Ok(new { code = 200, message = "Thanh toán giỏ hàng thành công", detail = query });
                     }
                 }
             }

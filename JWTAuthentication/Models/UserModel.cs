@@ -15,5 +15,7 @@ namespace JWTAuthentication.Authentication
         public string LastName { get; set; }
         public string Name { get { return FirstName + " " + LastName; } }
         public DateTime DateOfBirth { get; set; }
+
+        public List<StoreModel> FollowStores { get; set; }
     }
 }

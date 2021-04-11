@@ -62,11 +62,13 @@ namespace JWTAuthentication.Controllers
                 {
                     string checkExist = $"SELECT * from [Following] where UserID = N'{userID}' and StoreID = N'{storeID}'";
                     string querry = $"INSERT INTO [Following](ID,UserID,StoreID,FollowTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{storeID}' , N'{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}')";
+                    string addFollower = $"UPDATE Store SET FollowerCount = FollowerCount + 1 where ID = N'{storeID}'";
                     List<FollowingModel> result = conn.QueryAsync<FollowingModel>(checkExist).Result.AsList();
                     if(result.Count > 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Người dùng đã theo dõi" });
                     else
                     {
                         conn.Execute(querry);
+                        conn.Execute(addFollower);
                         return Ok(new { code = 200, message = "Theo dõi thành công" });
                     }
                 }
@@ -86,11 +88,13 @@ namespace JWTAuthentication.Controllers
                 {
                     string checkExist = $"SELECT * from [Following] where UserID = N'{userID}' and StoreID = N'{storeID}'";
                     string querry = $"DELETE from [Following] where UserID = N'{userID}' and StoreID = N'{storeID}' ";
+                    string deleteFollower = $"UPDATE Store SET FollowerCount = FollowerCount - 1 where ID = N'{storeID}'";
                     List<FollowingModel> result = conn.QueryAsync<FollowingModel>(checkExist).Result.AsList();
                     if (result.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có người dùng này theo dõi" });
                     else
                     {
                         conn.Execute(querry);
+                        conn.ExecuteAsync(deleteFollower);
                         return Ok(new { code = 200, message = "Bỏ theo dõi thành công" });
                     }
                 }

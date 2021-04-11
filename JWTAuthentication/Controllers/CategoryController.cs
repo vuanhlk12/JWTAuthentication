@@ -92,7 +92,10 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
                     string parentQuery = $"SELECT * FROM Category where id='{ParentID}'";
-                    CategoryModel Parent = conn.Query<CategoryModel>(parentQuery).FirstOrDefault();
+
+                    CategoryModel Parent = new CategoryModel();
+                    if (ParentID != null)
+                        Parent = conn.Query<CategoryModel>(parentQuery).FirstOrDefault();
 
                     string query = $"SELECT * FROM Category where parentid='{ParentID}'";
                     if (ParentID == null)

@@ -37,7 +37,7 @@ namespace JWTAuthentication.Controllers
                     string query = $"SELECT * FROM Cart where BuyerID = '{buyerID}'";
 
                     List<CartModel> cartQuerry = conn.Query<CartModel>(query).AsList();
-                    
+
 
                     if (cartQuerry.Count > 0) return Ok(new
                     {
@@ -82,28 +82,25 @@ namespace JWTAuthentication.Controllers
         [HttpPost("AddProductToCart")]
 
 
-        public IActionResult AddToCart(string userID ,CartModel cart)
-
+        public IActionResult AddToCart(CartModel cart)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string checkExist = $"SELECT * FROM Cart where BuyerID ='${userID}' and ProductID = '${cart.ProductID}' ";
-                    string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, Quantity) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}',N'{cart.Status}',N'{cart.Quantity}');";
-                    string updateQuanity = $"UPDATE Cart SET Quanity = '${cart.Quantity}, AddedTime = '${DateTime.Now.ToString("yyyy-MM-dd h:mm")}' WHERE BuyerID = '${userID}' AND ProductID = '${cart.ProductID}' ";
+                    string checkExist = $"SELECT * FROM Cart where BuyerID ='{cart.BuyerID}' and ProductID = '{cart.ProductID}' AND Status ='Added'";
                     List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
-    
-               
-                    if(cartQuerry.Count == 0)
 
+                    if (cartQuerry.Count == 0)
                     {
+                        string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, Quantity) VALUES(N'{Guid.NewGuid()}', N'{cart.BuyerID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}',N'Added',N'{cart.Quantity}');";
                         conn.Execute(insertNewItem);
                         return Ok(new { code = 200, message = $"Them gio hang thành công" });
                     }
                     else
                     {
+                        string updateQuanity = $"UPDATE Cart SET Quantity = {cart.Quantity + cartQuerry.FirstOrDefault().Quantity}, AddedTime = '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}' WHERE BuyerID = '{cart.BuyerID}' AND ProductID = '{cart.ProductID}' AND Status ='Added'";
                         conn.Execute(updateQuanity);
                         return Ok(new { code = 200, message = $"Cap nhat gio hang thành công" });
                     }
@@ -145,7 +142,7 @@ namespace JWTAuthentication.Controllers
 
 
         [HttpGet("ConfirmPayment")]
-        public   IActionResult UserConfirmPayment(string userID)
+        public IActionResult UserConfirmPayment(string userID)
         {
             try
             {
@@ -153,13 +150,14 @@ namespace JWTAuthentication.Controllers
                 {
                     string consumePending = $"SELECT c.buyerID, c.quantity,  c.status, c.ProductID, p.ID, p.Name, p.Price, p.Discount FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}' and c.Status = 'pending' ";
                     string changeStatus = $"UPDATE Cart SET Status = 'delivering' where BuyerID =  N'{userID}' AND Status = 'pending' ";
-                    var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(consumePending, (cart, product) => {
+                    var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(consumePending, (cart, product) =>
+                    {
                         cart.Product = product;
                         return cart;
                     }, splitOn: "ID").Result.ToList();
                     //update tất cả các order từ pending->delivering
-                   // conn.Execute(changeStatus);
-                    if(query.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có mặt hàng trong giỏ" });
+                    // conn.Execute(changeStatus);
+                    if (query.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có mặt hàng trong giỏ" });
                     else
                     {
                         string listItem = JsonConvert.SerializeObject(query);
@@ -168,9 +166,9 @@ namespace JWTAuthentication.Controllers
                         {
                             total += c.Quantity * c.Product.Price * c.Product.Discount;
                         }
-                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}', N'{DateTime.Now.AddDays(7).ToString("yyyy-MM-dd h:mm")}' )";
+                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', N'{DateTime.Now.AddDays(7).ToString("yyyy-MM-dd hh:mm:ss")}' )";
                         conn.Execute(createBill);
-                        return Ok(new { code = 200, message = listItem });
+                        return Ok(new { code = 200, message = "Thanh toán giỏ hàng thành công", detail = query });
                     }
                 }
             }

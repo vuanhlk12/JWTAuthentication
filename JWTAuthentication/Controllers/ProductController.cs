@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.Data.SqlClient;
 using Dapper;
 using Microsoft.AspNetCore.Http;
+using Nancy.Json;
 
 namespace JWTAuthentication.Controllers
 {
@@ -93,40 +94,62 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpGet("GetProductByCategoryIDbyRange")]
-        public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null)
+        public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue)
         {
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    CategoryController categoryController = new CategoryController();
-                    List<CategoryModel> categories = categoryController.GetCategoryAllChildList(CategoryID);
-                    string keyStr = "";
-
-                    if (categories.Count == 0)
-                    {
-                        keyStr = $"('{CategoryID}')";
-                    }
-                    else
-                    {
-                        keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
-                        keyStr = "('" + keyStr + "')";
-                    }
-
                     CategoryModel category = new CategoryModel();
+                    string query;
+                    List<ProductModel> products;
+                    string countQuery;
+                    int count;
 
                     if (CategoryID != null)
                     {
+                        CategoryController categoryController = new CategoryController();
+                        List<CategoryModel> categories = categoryController.GetCategoryAllChildList(CategoryID);
+                        string keyStr = "";
+
+                        if (categories.Count == 0)
+                        {
+                            keyStr = $"('{CategoryID}')";
+                        }
+                        else
+                        {
+                            keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
+                            keyStr = "('" + keyStr + "')";
+                        }
+
                         string categoryQuery = $"SELECT  * FROM Category where ID ='{CategoryID}'";
                         category = conn.Query<CategoryModel>(categoryQuery).FirstOrDefault();
+                        query = $"FROM Product WHERE CategoryID IN {keyStr}";
+
+                        countQuery = $"SELECT COUNT(*) FROM Product WHERE CategoryID IN {keyStr}";
+                        count = conn.Query<int>(countQuery).FirstOrDefault();
                     }
+                    else
+                    {
+                        query = $"FROM Product WHERE 1=1";
 
-                    string query = $"FROM Product WHERE CategoryID IN {keyStr}";
+                        countQuery = $"SELECT COUNT(*) FROM Product";
+                        count = conn.Query<int>(countQuery).FirstOrDefault();
+                    }
+                    if (star != 0) query += $"and Star >={star} and Star <{star + 1}";
+                    if (fromPrice >= 0) query += $"and Price >={fromPrice}";
+                    if (toPrice <= int.MaxValue) query += $"and Price <={toPrice}";
+
                     query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page} AND {size * (page + 1)}";
-                    List<ProductModel> products = conn.Query<ProductModel>(query).AsList();
-
-                    string countQuery = $"SELECT COUNT(*) FROM Product WHERE CategoryID IN {keyStr}";
-                    int count = conn.Query<int>(countQuery).FirstOrDefault();
+                    products = conn.Query<ProductModel>(query).AsList();
+                    //foreach (var product in products)
+                    //{
+                    //    double avgStar = 0;
+                    //    int ratingCount = 0;
+                    //    (avgStar, ratingCount) = new RatingController()._GetSmallRatingForProduct(product.ID);
+                    //    product.Star = avgStar;
+                    //    product.RatingsCount = ratingCount;
+                    //}
 
                     category.ProductsList = products ?? new List<ProductModel>();
                     return Ok(new { code = 200, total = count, message = category });
@@ -138,6 +161,8 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+
+
         [HttpGet("GetProductByID")]
         public IActionResult GetProductByID(string ProductID)
         {
@@ -147,7 +172,27 @@ namespace JWTAuthentication.Controllers
                 {
                     string query = $"SELECT * FROM Product WHERE ID = '{ProductID}'";
                     ProductModel products = conn.Query<ProductModel>(query).FirstOrDefault();
-                    return Ok(new { code = 200, message = products });
+
+                    string storeQuery = $"SELECT * FROM Store WHERE id = '{products.StoreID}'";
+                    StoreModel store = conn.Query<StoreModel>(storeQuery).FirstOrDefault();
+
+                    string ratingQuery = $"SELECT r.* FROM Product p inner join Cart c on p.ID = c.ProductID inner join Rating r on c.ID =r.CartID WHERE p.ID = '{ProductID}'";
+                    List<RatingModel> ratings = conn.Query<RatingModel>(ratingQuery).AsList();
+
+                    float starSum = 0;
+                    foreach (var rating in ratings)
+                    {
+                        starSum += rating.Star;
+                    }
+
+                    products.Store = store;
+                    products.Ratings = ratings;
+                    products.Star = starSum / ratings.Count;
+                    return Ok(new
+                    {
+                        code = 200,
+                        message = products
+                    });
                 }
             }
             catch (Exception ex)
@@ -163,7 +208,7 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string query = $"INSERT INTO Product (ID,Name,Price,Color,[Size],Detail,Description,CategoryID,Discount,Quanlity,[Image],AddedTime,LastModify,StoreID,SoldQuanlity) VALUES (N'{Guid.NewGuid()}', N'{Product.Name}', {Product.Price}, N'{Product.Color}', N'{Product.Size}', N'{Product.Detail}', N'{Product.Description}', N'{Product.CategoryID}', {Product.Discount}, {Product.Quanlity}, N'{Product.Image}', '{DateTime.Now.ToString("yyyy-MM-dd")}', '{DateTime.Now.ToString("yyyy-MM-dd")}', N'{Product.StoreID}', 0); ";
+                    string query = $"INSERT INTO Product (ID,Name,Price,Color,[Size],Detail,Description,CategoryID,Discount,Quanlity,[Image],AddedTime,LastModify,StoreID,SoldQuanlity) VALUES (N'{Guid.NewGuid()}', N'{Product.Name}', {Product.Price}, N'{Product.Color}', N'{Product.Size}', N'{Product.Detail}', N'{Product.Description}', N'{Product.CategoryID}', {Product.Discount}, {Product.Quanlity}, N'{Product.Image}', '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', N'{Product.StoreID}', 0); ";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Thêm sản phẩm {Product.Name} thành công" });
                 }

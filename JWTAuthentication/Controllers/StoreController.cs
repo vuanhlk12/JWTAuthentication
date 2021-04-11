@@ -42,6 +42,24 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [HttpGet("GetStoreByID")]
+        public IActionResult GetStoreByID(string StoreID = null)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"SELECT * FROM Store WHERE id = '{StoreID}'";
+                    StoreModel store = conn.Query<StoreModel>(query).FirstOrDefault();
+                    return Ok(new { code = 200, store = store });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
+            }
+        }
+
         [HttpGet("GetStoreByRange")]
         public IActionResult GetStoreByRange(int size, int page)
         {

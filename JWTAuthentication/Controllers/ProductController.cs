@@ -147,6 +147,11 @@ namespace JWTAuthentication.Controllers
                 {
                     string query = $"SELECT * FROM Product WHERE ID = '{ProductID}'";
                     ProductModel products = conn.Query<ProductModel>(query).FirstOrDefault();
+
+                    string storeQuery = $"SELECT * FROM Store WHERE id = '{products.StoreID}'";
+                    StoreModel store = conn.Query<StoreModel>(storeQuery).FirstOrDefault();
+
+                    products.Store = store;
                     return Ok(new { code = 200, message = products });
                 }
             }

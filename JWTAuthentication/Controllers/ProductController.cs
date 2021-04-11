@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.Data.SqlClient;
 using Dapper;
 using Microsoft.AspNetCore.Http;
+using Nancy.Json;
 
 namespace JWTAuthentication.Controllers
 {
@@ -93,7 +94,7 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpGet("GetProductByCategoryIDbyRange")]
-        public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null)
+        public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue)
         {
             try
             {
@@ -138,6 +139,8 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+
+
         [HttpGet("GetProductByID")]
         public IActionResult GetProductByID(string ProductID)
         {
@@ -151,8 +154,23 @@ namespace JWTAuthentication.Controllers
                     string storeQuery = $"SELECT * FROM Store WHERE id = '{products.StoreID}'";
                     StoreModel store = conn.Query<StoreModel>(storeQuery).FirstOrDefault();
 
+                    string ratingQuery = $"SELECT r.* FROM Product p inner join Cart c on p.ID = c.ProductID inner join Rating r on c.ID =r.CartID WHERE p.ID = '{ProductID}'";
+                    List<RatingModel> ratings = conn.Query<RatingModel>(ratingQuery).AsList();
+
+                    float starSum = 0;
+                    foreach (var rating in ratings)
+                    {
+                        starSum += rating.Star;
+                    }
+
                     products.Store = store;
-                    return Ok(new { code = 200, message = products });
+                    products.Ratings = ratings;
+                    products.Star = starSum / ratings.Count;
+                    return Ok(new
+                    {
+                        code = 200,
+                        message = products
+                    });
                 }
             }
             catch (Exception ex)
@@ -168,7 +186,7 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string query = $"INSERT INTO Product (ID,Name,Price,Color,[Size],Detail,Description,CategoryID,Discount,Quanlity,[Image],AddedTime,LastModify,StoreID,SoldQuanlity) VALUES (N'{Guid.NewGuid()}', N'{Product.Name}', {Product.Price}, N'{Product.Color}', N'{Product.Size}', N'{Product.Detail}', N'{Product.Description}', N'{Product.CategoryID}', {Product.Discount}, {Product.Quanlity}, N'{Product.Image}', '{DateTime.Now.ToString("yyyy-MM-dd")}', '{DateTime.Now.ToString("yyyy-MM-dd")}', N'{Product.StoreID}', 0); ";
+                    string query = $"INSERT INTO Product (ID,Name,Price,Color,[Size],Detail,Description,CategoryID,Discount,Quanlity,[Image],AddedTime,LastModify,StoreID,SoldQuanlity) VALUES (N'{Guid.NewGuid()}', N'{Product.Name}', {Product.Price}, N'{Product.Color}', N'{Product.Size}', N'{Product.Detail}', N'{Product.Description}', N'{Product.CategoryID}', {Product.Discount}, {Product.Quanlity}, N'{Product.Image}', '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', N'{Product.StoreID}', 0); ";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Thêm sản phẩm {Product.Name} thành công" });
                 }

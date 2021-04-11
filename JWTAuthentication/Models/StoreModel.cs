@@ -11,7 +11,8 @@ namespace JWTAuthentication.Authentication
         public DateTime CreateTime { get; set; }
         public string OwnerID { get; set; }
         public UserModel Owner { get; set; }
-
+        public double Star { get; set; }
+        public List<RatingModel> Ratings { get; set; }
         public List<UserModel> UsersFollow { get; set; }
     }
 }

@@ -61,7 +61,7 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
                     string checkExist = $"SELECT * from [Following] where UserID = N'{userID}' and StoreID = N'{storeID}'";
-                    string querry = $"INSERT INTO [Following](ID,UserID,StoreID,FollowTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{storeID}' , N'{DateTime.Now.ToString("yyyy-MM-dd h:mm")}')";
+                    string querry = $"INSERT INTO [Following](ID,UserID,StoreID,FollowTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{storeID}' , N'{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}')";
                     List<FollowingModel> result = conn.QueryAsync<FollowingModel>(checkExist).Result.AsList();
                     if(result.Count > 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Người dùng đã theo dõi" });
                     else

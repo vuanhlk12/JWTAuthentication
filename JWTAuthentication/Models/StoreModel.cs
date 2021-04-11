@@ -12,7 +12,9 @@ namespace JWTAuthentication.Authentication
         public string OwnerID { get; set; }
         public UserModel Owner { get; set; }
         public double Star { get; set; }
+        public int RatingsCount { get; set; }
         public List<RatingModel> Ratings { get; set; }
-        public List<UserModel> UsersFollow { get; set; }
+        public int FollowerCount { get; set; }
+        public List<UserModel> Followers { get; set; }
     }
 }

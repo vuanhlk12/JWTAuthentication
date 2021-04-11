@@ -100,34 +100,56 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    CategoryController categoryController = new CategoryController();
-                    List<CategoryModel> categories = categoryController.GetCategoryAllChildList(CategoryID);
-                    string keyStr = "";
-
-                    if (categories.Count == 0)
-                    {
-                        keyStr = $"('{CategoryID}')";
-                    }
-                    else
-                    {
-                        keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
-                        keyStr = "('" + keyStr + "')";
-                    }
-
                     CategoryModel category = new CategoryModel();
+                    string query;
+                    List<ProductModel> products;
+                    string countQuery;
+                    int count;
 
                     if (CategoryID != null)
                     {
+                        CategoryController categoryController = new CategoryController();
+                        List<CategoryModel> categories = categoryController.GetCategoryAllChildList(CategoryID);
+                        string keyStr = "";
+
+                        if (categories.Count == 0)
+                        {
+                            keyStr = $"('{CategoryID}')";
+                        }
+                        else
+                        {
+                            keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
+                            keyStr = "('" + keyStr + "')";
+                        }
+
                         string categoryQuery = $"SELECT  * FROM Category where ID ='{CategoryID}'";
                         category = conn.Query<CategoryModel>(categoryQuery).FirstOrDefault();
+                        query = $"FROM Product WHERE CategoryID IN {keyStr}";
+
+                        countQuery = $"SELECT COUNT(*) FROM Product WHERE CategoryID IN {keyStr}";
+                        count = conn.Query<int>(countQuery).FirstOrDefault();
                     }
+                    else
+                    {
+                        query = $"FROM Product WHERE 1=1";
 
-                    string query = $"FROM Product WHERE CategoryID IN {keyStr}";
+                        countQuery = $"SELECT COUNT(*) FROM Product";
+                        count = conn.Query<int>(countQuery).FirstOrDefault();
+                    }
+                    if (star != 0) query += $"and Star >={star} and Star <{star + 1}";
+                    if (fromPrice >= 0) query += $"and Price >={fromPrice}";
+                    if (toPrice <= int.MaxValue) query += $"and Price <={toPrice}";
+
                     query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page} AND {size * (page + 1)}";
-                    List<ProductModel> products = conn.Query<ProductModel>(query).AsList();
-
-                    string countQuery = $"SELECT COUNT(*) FROM Product WHERE CategoryID IN {keyStr}";
-                    int count = conn.Query<int>(countQuery).FirstOrDefault();
+                    products = conn.Query<ProductModel>(query).AsList();
+                    //foreach (var product in products)
+                    //{
+                    //    double avgStar = 0;
+                    //    int ratingCount = 0;
+                    //    (avgStar, ratingCount) = new RatingController()._GetSmallRatingForProduct(product.ID);
+                    //    product.Star = avgStar;
+                    //    product.RatingsCount = ratingCount;
+                    //}
 
                     category.ProductsList = products ?? new List<ProductModel>();
                     return Ok(new { code = 200, total = count, message = category });

@@ -30,7 +30,7 @@ namespace JWTAuthentication.Authentication
         public string StoreID { get; set; }
         public StoreModel Store { get; set; }
         public string SoldQuanlity { get; set; }
-        public ICollection<CartModel> CartList { get; set; }
+        public int RatingsCount { get; set; }
         public List<RatingModel> Ratings { get; set; }
         public double Star { get; set; }
     }

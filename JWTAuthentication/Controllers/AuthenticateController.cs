@@ -1,8 +1,10 @@
-﻿using JWTAuthentication.Authentication;
+﻿using Dapper;
+using JWTAuthentication.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -11,6 +13,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace JWTAuthentication.Controllers
 {
@@ -67,6 +70,13 @@ namespace JWTAuthentication.Controllers
                     signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
                     );
 
+                StoreModel store = null;
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"SELECT * FROM Store where OwnerID ='{user.Id}'";
+                    store = conn.Query<StoreModel>(query).FirstOrDefault();
+                }
+
                 return Ok(new
                 {
                     code = 200,
@@ -84,7 +94,8 @@ namespace JWTAuthentication.Controllers
                         lastName = user.LastName,
                         phone = user.PhoneNumber,
                         profilePhoto = user.ProfilePhoto,
-                        role = userRoles
+                        role = userRoles,
+                        store = store
                     }
                 }); ;
             }

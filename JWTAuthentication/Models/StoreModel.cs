@@ -16,5 +16,6 @@ namespace JWTAuthentication.Authentication
         public List<RatingModel> Ratings { get; set; }
         public int FollowerCount { get; set; }
         public List<UserModel> Followers { get; set; }
+        public int Approved { get; set; }
     }
 }

@@ -94,13 +94,13 @@ namespace JWTAuthentication.Controllers
 
                     if (cartQuerry.Count == 0)
                     {
-                        string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, Quantity) VALUES(N'{Guid.NewGuid()}', N'{cart.BuyerID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}',N'Added',N'{cart.Quantity}');";
+                        string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, Quantity) VALUES(N'{Guid.NewGuid()}', N'{cart.BuyerID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}',N'Added',N'{cart.Quantity}');";
                         conn.Execute(insertNewItem);
                         return Ok(new { code = 200, message = $"Them gio hang thành công" });
                     }
                     else
                     {
-                        string updateQuanity = $"UPDATE Cart SET Quantity = {cart.Quantity + cartQuerry.FirstOrDefault().Quantity}, AddedTime = '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}' WHERE BuyerID = '{cart.BuyerID}' AND ProductID = '{cart.ProductID}' AND Status ='Added'";
+                        string updateQuanity = $"UPDATE Cart SET Quantity = {cart.Quantity + cartQuerry.FirstOrDefault().Quantity}, AddedTime = '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' WHERE BuyerID = '{cart.BuyerID}' AND ProductID = '{cart.ProductID}' AND Status ='Added'";
                         conn.Execute(updateQuanity);
                         return Ok(new { code = 200, message = $"Cap nhat gio hang thành công" });
                     }
@@ -166,7 +166,7 @@ namespace JWTAuthentication.Controllers
                         {
                             total += c.Quantity * c.Product.Price * c.Product.Discount;
                         }
-                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', N'{DateTime.Now.AddDays(7).ToString("yyyy-MM-dd hh:mm:ss")}' )";
+                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{DateTime.Now.AddDays(7).ToString("yyyy-MM-dd HH:mm:ss")}' )";
                         conn.Execute(createBill);
                         return Ok(new { code = 200, message = "Thanh toán giỏ hàng thành công", detail = query });
                     }

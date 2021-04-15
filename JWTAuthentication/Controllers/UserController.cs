@@ -45,12 +45,13 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetUserByRange")]
         public IActionResult GetUserByRange(int page = 0, int size = 0)
         {
+            page--;
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
             {
                 try
                 {
                     string query = $"FROM AspNetUsers";
-                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page} AND {size * (page + 1)}";
+                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
                     List<UserModel> user = conn.Query<UserModel>(query).AsList();
                     return Ok(new { code = 200, data = user });
                 }

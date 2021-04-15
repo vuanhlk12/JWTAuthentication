@@ -85,7 +85,6 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetStoreByRange")]
         public IActionResult GetStoreByRange(int size, int page, int? aproveStatus = null)
         {
-            size--;
             page--;
             try
             {
@@ -93,7 +92,7 @@ namespace JWTAuthentication.Controllers
                 {
                     string query = "FROM Store";
                     if (aproveStatus != null) query += $" where Approved ={aproveStatus}";
-                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {page * size + 1} AND {(page + 1) * size + 1}";
+                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {page * size + 1} AND {(page + 1) * size}";
                     List<StoreModel> store = conn.Query<StoreModel>(query).AsList();
                     return Ok(new { code = 200, store = store });
                 }
@@ -111,7 +110,7 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string query = $"INSERT INTO Store (ID,Name,Detail,CreateTime,OwnerID,Approved) VALUES (N'{Guid.NewGuid()}', N'{Store.Name}', N'{Store.Detail}', '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', N'{Store.OwnerID}', 0); ";
+                    string query = $"INSERT INTO Store (ID,Name,Detail,CreateTime,OwnerID,Approved) VALUES (N'{Guid.NewGuid()}', N'{Store.Name}', N'{Store.Detail}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{Store.OwnerID}', 0); ";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = "Thêm cửa hàng thành công" });
                 }

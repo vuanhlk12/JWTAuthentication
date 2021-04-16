@@ -188,7 +188,10 @@ namespace JWTAuthentication.Controllers
 
                     products.Store = store;
                     products.Ratings = ratings;
-                    products.Star = starSum / ratings.Count;
+                    if (ratings.Count == 0)
+                        products.Star = 0;
+                    else
+                        products.Star = starSum / ratings.Count;
                     return Ok(new
                     {
                         code = 200,

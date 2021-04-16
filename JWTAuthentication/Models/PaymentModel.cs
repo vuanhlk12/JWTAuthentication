@@ -9,5 +9,7 @@ namespace JWTAuthentication.Authentication
         public string Type { get; set; }
         public string Detail { get; set; }
         public string UserID { get; set; }
+        public string CardNumber { get; set; }
+        public string WalletID { get; set; }
     }
 }

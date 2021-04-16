@@ -96,6 +96,7 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetProductByCategoryIDbyRange")]
         public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue)
         {
+            page--;
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
@@ -126,21 +127,21 @@ namespace JWTAuthentication.Controllers
                         category = conn.Query<CategoryModel>(categoryQuery).FirstOrDefault();
                         query = $"FROM Product WHERE CategoryID IN {keyStr}";
 
-                        countQuery = $"SELECT COUNT(*) FROM Product WHERE CategoryID IN {keyStr}";
-                        count = conn.Query<int>(countQuery).FirstOrDefault();
                     }
                     else
                     {
                         query = $"FROM Product WHERE 1=1";
 
-                        countQuery = $"SELECT COUNT(*) FROM Product";
-                        count = conn.Query<int>(countQuery).FirstOrDefault();
+
                     }
                     if (star != 0) query += $"and Star >={star} and Star <{star + 1}";
                     if (fromPrice >= 0) query += $"and Price >={fromPrice}";
                     if (toPrice <= int.MaxValue) query += $"and Price <={toPrice}";
 
-                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page} AND {size * (page + 1)}";
+                    countQuery = $"SELECT COUNT(*) {query}";
+                    count = conn.Query<int>(countQuery).FirstOrDefault();
+
+                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
                     products = conn.Query<ProductModel>(query).AsList();
                     //foreach (var product in products)
                     //{
@@ -201,6 +202,35 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [HttpGet("GetProductByStoreIDbyRange")]
+        public IActionResult GetProductByStoreIDbyRange(int size, int page, string StoreID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue)
+        {
+            page--;
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"FROM Product WHERE StoreID ='{StoreID}'";
+                    if (star != 0) query += $"and Star >={star} and Star <{star + 1}";
+                    if (fromPrice >= 0) query += $"and Price >={fromPrice}";
+                    if (toPrice <= int.MaxValue) query += $"and Price <={toPrice}";
+
+                    string countQuery = $"SELECT COUNT(*) {query}";
+                    int count = conn.Query<int>(countQuery).FirstOrDefault();
+
+                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
+                    List<ProductModel> products = conn.Query<ProductModel>(query).AsList();
+
+                    return Ok(new { code = 200, total = count, message = products });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
+            }
+        }
+
+
         [HttpPost("AddProductByStore")]
         public ActionResult AddProductByStore([FromBody] ProductModel Product)
         {
@@ -208,9 +238,45 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string query = $"INSERT INTO Product (ID,Name,Price,Color,[Size],Detail,Description,CategoryID,Discount,Quanlity,[Image],AddedTime,LastModify,StoreID,SoldQuanlity) VALUES (N'{Guid.NewGuid()}', N'{Product.Name}', {Product.Price}, N'{Product.Color}', N'{Product.Size}', N'{Product.Detail}', N'{Product.Description}', N'{Product.CategoryID}', {Product.Discount}, {Product.Quanlity}, N'{Product.Image}', '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', N'{Product.StoreID}', 0); ";
+                    string query = $"INSERT INTO Product (ID,Name,Price,Color,[Size],Detail,Description,CategoryID,Discount,Quanlity,[Image],AddedTime,LastModify,StoreID,SoldQuanlity,Star,RatingsCount) VALUES (N'{Guid.NewGuid()}', N'{Product.Name}', {Product.Price}, N'{Product.Color}', N'{Product.Size}', N'{Product.Detail}', N'{Product.Description}', N'{Product.CategoryID}', {Product.Discount}, {Product.Quanlity}, N'{Product.Image}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{Product.StoreID}', 0,0,0); ";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Thêm sản phẩm {Product.Name} thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
+        [HttpPost("UpdateProductByStore")]
+        public ActionResult UpdateProductByStore([FromBody] ProductModel Product)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"UPDATE Product SET Name=N'{Product.Name}', Price={Product.Price}, Color=N'{Product.Color}', [Size]=N'{Product.Size}', Detail=N'{Product.Detail}', Description=N'{Product.Description}', CategoryID=N'{Product.CategoryID}', Discount={Product.Discount}, Quanlity={Product.Quanlity}, [Image]=N'{Product.Image}', LastModify='{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', StoreID=N'{Product.StoreID}' WHERE ID='{Product.ID}'";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = $"Sửa sản phẩm {Product.Name} thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
+        [HttpPost("DeleteProductByStore")]
+        public ActionResult DeleteProductByStore([FromBody] string ProductID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"DELETE FROM Product WHERE ID='{ProductID}'";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = $"Xóa thành công" });
                 }
             }
             catch (Exception ex)

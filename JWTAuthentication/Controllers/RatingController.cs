@@ -41,7 +41,7 @@ namespace JWTAuthentication.Controllers
                         return StatusCode(StatusCodes.Status424FailedDependency, new { code = 424, message = "Không tìm thấy mặt hàng trong giỏ hoặc đơn chưa được thanh toán" });
                     }
 
-                    string query = $"INSERT INTO Rating (ID, Comment, Star, ParentID, [Image], [Time], CartID) VALUES('{Guid.NewGuid()}', '{rating.Comment}', {rating.Star}, '{rating.ParentID}', '{rating.Image}', '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', '{rating.CartID}')";
+                    string query = $"INSERT INTO Rating (ID, Comment, Star, ParentID, [Image], [Time], CartID) VALUES('{Guid.NewGuid()}', '{rating.Comment}', {rating.Star}, '{rating.ParentID}', '{rating.Image}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', '{rating.CartID}')";
                     conn.Execute(query);
 
                     string getProductQuery = $"SELECT * FROM Product where ID = '{cart.ProductID}'";

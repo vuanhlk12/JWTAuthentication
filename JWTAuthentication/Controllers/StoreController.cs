@@ -83,13 +83,16 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpGet("GetStoreByRange")]
-        public IActionResult GetStoreByRange(int size, int page)
+        public IActionResult GetStoreByRange(int size, int page, int? aproveStatus = null)
         {
+            page--;
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * FROM Store ) t WHERE RowNr BETWEEN {page * size} AND {(page + 1) * size}";
+                    string query = "FROM Store";
+                    if (aproveStatus != null) query += $" where Approved ={aproveStatus}";
+                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {page * size + 1} AND {(page + 1) * size}";
                     List<StoreModel> store = conn.Query<StoreModel>(query).AsList();
                     return Ok(new { code = 200, store = store });
                 }
@@ -107,9 +110,63 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string query = $"INSERT INTO Store (ID,Name,Detail,CreateTime,OwnerID,Approved) VALUES (N'{Guid.NewGuid()}', N'{Store.Name}', N'{Store.Detail}', '{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}', N'{Store.OwnerID}', 0); ";
+                    string query = $"INSERT INTO Store (ID,Name,Detail,CreateTime,OwnerID,Approved) VALUES (N'{Guid.NewGuid()}', N'{Store.Name}', N'{Store.Detail}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{Store.OwnerID}', 0); ";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = "Thêm cửa hàng thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
+        [HttpPost("ApproveStoreByAdmin")]
+        public IActionResult ApproveStoreByAdmin(string StoreID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"UPDATE Store SET  Approved=1 WHERE ID='{StoreID}'";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = "Xác thực cửa hàng thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
+        [HttpPost("AproveStoreByAdmin")]
+        public IActionResult AproveStoreByAdmin([FromBody] string StoreID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"UPDATE Store SET  Approved=1 WHERE ID='{StoreID}'";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = "Xác thực cửa hàng thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
+        [HttpPost("BanStoreByAdmin")]
+        public IActionResult BanStoreByAdmin([FromBody] string StoreID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"UPDATE Store SET  Approved=2 WHERE ID='{StoreID}'";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = "Cấm cửa hàng thành công" });
                 }
             }
             catch (Exception ex)

@@ -148,15 +148,15 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string consumePending = $"SELECT c.buyerID, c.quantity,  c.status, c.ProductID, p.ID, p.Name, p.Price, p.Discount FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}' and c.Status = 'pending' ";
-                    string changeStatus = $"UPDATE Cart SET Status = 'delivering' where BuyerID =  N'{userID}' AND Status = 'pending' ";
+                    string consumePending = $"SELECT c.buyerID, c.quantity,  c.status, c.ProductID, p.ID, p.Name, p.Price, p.Discount FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}' and c.Status = 'Added' ";
+                    string changeStatus = $"UPDATE Cart SET Status = 'Paid' where BuyerID =  N'{userID}' AND Status = 'Added' ";
                     var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(consumePending, (cart, product) =>
                     {
                         cart.Product = product;
                         return cart;
                     }, splitOn: "ID").Result.ToList();
-                    //update tất cả các order từ pending->delivering
-                    // conn.Execute(changeStatus);
+                    
+                     conn.Execute(changeStatus);
                     if (query.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có mặt hàng trong giỏ" });
                     else
                     {

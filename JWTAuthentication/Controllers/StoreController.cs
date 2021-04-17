@@ -59,7 +59,10 @@ namespace JWTAuthentication.Controllers
                 }
 
                 store.Ratings = ratings;
-                store.Star = starSum / ratings.Count;
+                if (ratings.Count == 0)
+                    store.Star = 0;
+                else
+                    store.Star = starSum / ratings.Count;
 
                 return store;
             }

@@ -107,6 +107,51 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpPost]
+        [Route("ChangeInfo")]
+        [Authorize]
+        public async Task<IActionResult> ChangeInfo([FromBody] ChangeInfoModel model)
+        {
+            var UserName = User.Identity.Name;
+            var user = await userManager.FindByNameAsync(User.Identity.Name);
+
+            //update
+            user.Email = model.Email;
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.Gender = model.Gender;
+            user.DateOfBirth = model.DateOfBirth;
+            user.PhoneNumber = model.PhoneNumber;
+
+            string message;
+            var UpdateResult = await userManager.UpdateAsync(user);
+            if (UpdateResult.Succeeded)
+            {
+                message = $"Thay đổi thông tin tài khoản {UserName} thành công";
+            }
+            else
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"Đã có lỗi: {UpdateResult.Errors.First().Description}" });
+            }
+
+            if (model.ChangePassword)
+            {
+                var result = await userManager.ChangePasswordAsync(user, model.Password, model.NewPassword);
+                if (result.Succeeded)
+                {
+                    return Ok(new { code = 200, message = $"{message}, Tài khoản {UserName} đã thay đổi mật khẩu thành công" });
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"{message}, Đã có lỗi: {result.Errors.First().Description}" });
+                }
+            }
+            else
+            {
+                return Ok(new { code = 200, message = message });
+            }
+        }
+
+        [HttpPost]
         [Route("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {

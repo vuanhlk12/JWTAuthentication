@@ -34,17 +34,21 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string query = $"SELECT * FROM Cart where BuyerID = '{buyerID}'";
+                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime,  p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}' ";
 
-                    List<CartModel> cartQuerry = conn.Query<CartModel>(query).AsList();
+                    var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(queryJoin, (cart, product) =>
+                    {
+                        cart.Product = product;
+                        return cart;
+                    }, splitOn: "ID").Result.ToList();
 
 
-                    if (cartQuerry.Count > 0) return Ok(new
+                    if (query.Count > 0) return Ok(new
                     {
                         code = 200,
-                        Cart = cartQuerry
+                        Cart = query
                     });
-                    else return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy mặt hàng trong giỏ" });
+                    else return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có mặt hàng trong giỏ" });
                 }
             }
             catch
@@ -61,14 +65,18 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string query = $"SELECT * FROM Cart where BuyerID = N'{buyerID}' and ProductID = N'{productID}' ";
+                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime,  p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}' and c.ProductID = N'{productID}' ";
 
-                    List<CartModel> cartQuerry = conn.Query<CartModel>(query).AsList();
+                    var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(queryJoin, (cart, product) =>
+                    {
+                        cart.Product = product;
+                        return cart;
+                    }, splitOn: "ID").Result.ToList();
 
-                    if (cartQuerry.Count > 0) return Ok(new
+                    if (query.Count > 0) return Ok(new
                     {
                         code = 200,
-                        Cart = cartQuerry
+                        Cart = query
                     });
                     else return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy mặt hàng trong giỏ" });
                 }

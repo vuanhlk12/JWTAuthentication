@@ -37,7 +37,7 @@ namespace JWTAuthentication.Controllers
                     List<UserModel> users = conn.QueryAsync<UserModel>(checkExist).Result.AsList();
                     if (users.Count == 0)
                     {
-                        return StatusCode(StatusCodes.Status404NotFound, new { code = 4041, message = "User không tồn tại" });
+                        return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User không tồn tại" });
                     }
                     else
                     {

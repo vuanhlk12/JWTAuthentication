@@ -7,6 +7,6 @@ namespace JWTAuthentication.Authentication
     {
         public string ID { get; set; }
         public string CityName { get; set; }
-        public string DistrictID { get; set; }
+        public DistrictModel District { get; set; }
     }
 }

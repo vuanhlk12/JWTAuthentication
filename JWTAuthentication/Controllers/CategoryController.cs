@@ -112,6 +112,36 @@ namespace JWTAuthentication.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
             }
         }
+
+        [HttpGet("GetParentCategory")]
+        public IActionResult GetParentCategory(string ParentID = null)
+        {
+            try
+            {
+                List<CategoryModel> category = _GetParentCategory(ParentID);
+                return Ok(new { code = 200, message = category});
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
+            }
+        }
+
+        public List<CategoryModel> _GetParentCategory(string ParentID)
+        {
+            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+            {
+                string Query = $"SELECT * FROM Category where id='{ParentID}'";
+                var Category = conn.Query<CategoryModel>(Query).FirstOrDefault();
+                List<CategoryModel> ParentCategory = new List<CategoryModel>();
+                if (Category.ParentID != null)
+                {
+                    ParentCategory = _GetParentCategory(Category.ParentID);
+                }
+                ParentCategory.Add(Category);
+                return ParentCategory;
+            }
+        }
     }
 
 }

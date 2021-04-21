@@ -113,13 +113,16 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        [HttpGet("GetParentCategory")]
-        public IActionResult GetParentCategory(string ParentID = null)
+        [HttpGet("CategoryAllParentList")]
+        public IActionResult CategoryAllParentList(string CategoryID = null)
         {
             try
             {
-                List<CategoryModel> category = _GetParentCategory(ParentID);
-                return Ok(new { code = 200, message = category});
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    List<CategoryModel> toReturn = GetCategoryAllParentList(CategoryID).Reverse<CategoryModel>().ToList();
+                    return Ok(new { code = 200, message = toReturn });
+                }
             }
             catch (Exception ex)
             {
@@ -127,19 +130,26 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        public List<CategoryModel> _GetParentCategory(string ParentID)
+        public List<CategoryModel> GetCategoryAllParentList(string CategoryID = null)
         {
-            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+            try
             {
-                string Query = $"SELECT * FROM Category where id='{ParentID}'";
-                var Category = conn.Query<CategoryModel>(Query).FirstOrDefault();
-                List<CategoryModel> ParentCategory = new List<CategoryModel>();
-                if (Category.ParentID != null)
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    ParentCategory = _GetParentCategory(Category.ParentID);
+                    List<CategoryModel> categories = new List<CategoryModel>();
+                    string query = $"SELECT * FROM Category where id ='{CategoryID}'";
+                    CategoryModel category = conn.Query<CategoryModel>(query).FirstOrDefault();
+                    categories.Add(category);
+                    if (category.ParentID != null)
+                    {
+                        categories.AddRange(GetCategoryAllParentList(category.ParentID));
+                    }
+                    return categories;
                 }
-                ParentCategory.Add(Category);
-                return ParentCategory;
+            }
+            catch
+            {
+                return null;
             }
         }
     }

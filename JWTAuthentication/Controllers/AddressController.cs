@@ -108,5 +108,61 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [HttpGet("GetCity")]
+        public IActionResult GetCity(string CityID = null)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    if (CityID == null)
+                    {
+                        string query = $"SELECT * FROM City";
+                        var ListCity = conn.Query<CityModel>(query).AsList();
+                        return Ok(new { code = 200, message = ListCity });
+                    }
+                    else
+                    {
+                        string query = $"SELECT * FROM City where ID = '{CityID}'";
+                        var ListCity = conn.Query<CityModel>(query).AsList().FirstOrDefault();
+                        return Ok(new { code = 200, message = ListCity });
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
+        [HttpGet("GetDistrict")]
+        public IActionResult GetDistrict(string DistrictID = null)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    if (DistrictID == null)
+                    {
+                        string query = $"SELECT * FROM District";
+                        var ListDistrict = conn.Query<DistrictModel>(query).AsList();
+                        return Ok(new { code = 200, message = ListDistrict });
+                    }
+                    else
+                    {
+                        string query = $"SELECT * FROM District where ID = '{DistrictID}'";
+                        var ListDistrict = conn.Query<DistrictModel>(query).AsList().FirstOrDefault();
+                        return Ok(new { code = 200, message = ListDistrict });
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
     }
 }

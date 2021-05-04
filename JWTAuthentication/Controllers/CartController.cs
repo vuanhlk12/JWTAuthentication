@@ -34,7 +34,7 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity , p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}' ";
+                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity , p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}' and c.Status = 'Added' ";
 
                     var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(queryJoin, (cart, product) =>
                     {
@@ -65,7 +65,7 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity, p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}' and c.ProductID = N'{productID}' ";
+                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity, p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}' and c.ProductID = N'{productID}' and c.Status= 'Added' ";
 
                     var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(queryJoin, (cart, product) =>
                     {
@@ -108,7 +108,7 @@ namespace JWTAuthentication.Controllers
                     }
                     else
                     {
-                        string updateQuanity = $"UPDATE Cart SET Quantity = {cart.Quantity + cartQuerry.FirstOrDefault().Quantity}, AddedTime = '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' WHERE BuyerID = '{cart.BuyerID}' AND ProductID = '{cart.ProductID}' AND Status ='Added'";
+                        string updateQuanity = $"UPDATE Cart SET Quantity = {cart.Quantity}, AddedTime = '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' WHERE BuyerID = '{cart.BuyerID}' AND ProductID = '{cart.ProductID}' AND Status ='Added'";
                         conn.Execute(updateQuanity);
                         return Ok(new { code = 200, message = $"Cap nhat gio hang thành công" });
                     }

@@ -163,8 +163,8 @@ namespace JWTAuthentication.Controllers
                         cart.Product = product;
                         return cart;
                     }, splitOn: "ID").Result.ToList();
-                    
-                     conn.Execute(changeStatus);
+
+                    conn.Execute(changeStatus);
                     if (query.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có mặt hàng trong giỏ" });
                     else
                     {
@@ -172,7 +172,7 @@ namespace JWTAuthentication.Controllers
                         int total = 0;
                         foreach (CartModel c in query)
                         {
-                            total += c.Quantity * c.Product.Price - c.Product.Discount;
+                            total += (int)(c.Quantity * c.Product.Price * (1 - (float)c.Product.Discount / 100));
                         }
                         string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{DateTime.Now.AddDays(7).ToString("yyyy-MM-dd HH:mm:ss")}' )";
                         conn.Execute(createBill);

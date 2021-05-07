@@ -151,6 +151,50 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("GetInfoByToken")]
+        [Authorize]
+        public async Task<IActionResult> GetInfoByToken()
+        {
+            var UserName = User.Identity.Name;
+            try
+            {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
+                var userRoles = await userManager.GetRolesAsync(user);
+                StoreModel store = null;
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"SELECT * FROM Store where OwnerID ='{user.Id}'";
+                    store = conn.Query<StoreModel>(query).FirstOrDefault();
+                }
+                return Ok(new
+                {
+                    code = 200,
+                    message = new
+                    {
+                        id = user.Id,
+                        userName = user.UserName,
+                        email = user.Email,
+                        phoneNumber = user.PhoneNumber,
+                        gender = user.Gender,
+                        profilePhoto = user.ProfilePhoto,
+                        firstName = user.FirstName,
+                        lastName = user.LastName,
+                        name = user.FirstName + " " + user.LastName,
+                        dateOfBirth = user.DateOfBirth,
+                        role = userRoles,
+                        store = store
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new { code = 500, message = ex.Message });
+            }
+
+
+        }
+
         [HttpPost]
         [Route("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)

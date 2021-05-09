@@ -86,7 +86,7 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpGet("GetStoreByRange")]
-        public IActionResult GetStoreByRange(int size, int page, int? aproveStatus = null)
+        public IActionResult GetStoreByRange(int size, int page, int? aproveStatus = null, string searchKey = null)
         {
             page--;
             try
@@ -95,15 +95,43 @@ namespace JWTAuthentication.Controllers
                 {
                     string query = "FROM Store";
                     if (aproveStatus != null) query += $" where Approved ={aproveStatus}";
-                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {page * size + 1} AND {(page + 1) * size}";
-                    List<StoreModel> store = conn.Query<StoreModel>(query).AsList();
-                    return Ok(new { code = 200, store = store });
+                    query = $"SELECT  * {query}";
+                    var listAll = conn.Query<StoreModel>(query).AsList();
+
+                    if (searchKey != null)
+                    {
+                        listAll = SearchByName(listAll, searchKey);
+                    }
+
+                    int count = listAll.Count();
+                    var store = listAll.OrderBy(p => p.ID).Skip(size * page).Take(size).AsList();
+                    return Ok(new { code = 200, total = count, store = store });
                 }
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
             }
+        }
+
+        public List<StoreModel> SearchByName(List<StoreModel> listAll, string searchKey)
+        {
+            string[] words = searchKey.Split(' ');
+            List<StoreModel> returnList = new List<StoreModel>();
+            foreach (StoreModel store in listAll)
+            {
+                int count = 0;
+                foreach (string word in words)
+                {
+                    if (store.Name.ToLower().Contains(word.ToLower()))
+                    {
+                        count++;
+                    }
+                }
+                if (count == words.Count())
+                    returnList.Add(store);
+            }
+            return returnList;
         }
 
         [HttpPost("AddStoreByUser")]

@@ -93,8 +93,9 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+
         [HttpGet("GetProductByCategoryIDbyRange")]
-        public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue)
+        public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue, string searchKey = null)
         {
             page--;
             try
@@ -104,8 +105,6 @@ namespace JWTAuthentication.Controllers
                     CategoryModel category = new CategoryModel();
                     string query;
                     List<ProductModel> products;
-                    string countQuery;
-                    int count;
 
                     if (CategoryID != null)
                     {
@@ -138,19 +137,18 @@ namespace JWTAuthentication.Controllers
                     if (fromPrice >= 0) query += $"and Price >={fromPrice}";
                     if (toPrice <= int.MaxValue) query += $"and Price <={toPrice}";
 
-                    countQuery = $"SELECT COUNT(*) {query}";
-                    count = conn.Query<int>(countQuery).FirstOrDefault();
 
-                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
-                    products = conn.Query<ProductModel>(query).AsList();
-                    //foreach (var product in products)
-                    //{
-                    //    double avgStar = 0;
-                    //    int ratingCount = 0;
-                    //    (avgStar, ratingCount) = new RatingController()._GetSmallRatingForProduct(product.ID);
-                    //    product.Star = avgStar;
-                    //    product.RatingsCount = ratingCount;
-                    //}
+                    //query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
+                    query = $"SELECT  * {query}";
+                    var listAll = conn.Query<ProductModel>(query).AsList();
+
+                    if (searchKey != null)
+                    {
+                        listAll = SearchByName(listAll, searchKey);
+                    }
+
+                    int count = listAll.Count();
+                    products = listAll.OrderBy(p => p.ID).Skip(size * page).Take(size).AsList();
 
                     category.ProductsList = products ?? new List<ProductModel>();
                     return Ok(new { code = 200, total = count, message = category });
@@ -162,7 +160,25 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-
+        public List<ProductModel> SearchByName(List<ProductModel> listAll, string searchKey)
+        {
+            string[] words = searchKey.Split(' ');
+            List<ProductModel> returnList = new List<ProductModel>();
+            foreach (ProductModel product in listAll)
+            {
+                int count = 0;
+                foreach (string word in words)
+                {
+                    if (product.Name.ToLower().Contains(word.ToLower()))
+                    {
+                        count++;
+                    }
+                }
+                if (count == words.Count())
+                    returnList.Add(product);
+            }
+            return returnList;
+        }
 
         [HttpGet("GetProductByID")]
         public IActionResult GetProductByID(string ProductID)

@@ -34,7 +34,7 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity , p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}' and c.Status = 'Added' ";
+                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity , p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}'  ";
 
                     var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(queryJoin, (cart, product) =>
                     {
@@ -65,7 +65,7 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity, p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}' and c.ProductID = N'{productID}' and c.Status= 'Added' ";
+                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity, p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}' and c.ProductID = N'{productID}'  ";
 
                     var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(queryJoin, (cart, product) =>
                     {
@@ -97,18 +97,18 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string checkExist = $"SELECT * FROM Cart where BuyerID ='{cart.BuyerID}' and ProductID = '{cart.ProductID}' AND Status ='Added'";
+                    string checkExist = $"SELECT * FROM Cart where BuyerID ='{cart.BuyerID}' and ProductID = '{cart.ProductID}'";
                     List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
 
                     if (cartQuerry.Count == 0)
                     {
-                        string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime, Status, Quantity) VALUES(N'{Guid.NewGuid()}', N'{cart.BuyerID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}',N'Added',N'{cart.Quantity}');";
+                        string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime,  Quantity) VALUES(N'{Guid.NewGuid()}', N'{cart.BuyerID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}',N'{cart.Quantity}');";
                         conn.Execute(insertNewItem);
                         return Ok(new { code = 200, message = $"Them gio hang thành công" });
                     }
                     else
                     {
-                        string updateQuanity = $"UPDATE Cart SET Quantity = {cart.Quantity}, AddedTime = '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' WHERE BuyerID = '{cart.BuyerID}' AND ProductID = '{cart.ProductID}' AND Status ='Added'";
+                        string updateQuanity = $"UPDATE Cart SET Quantity = {cart.Quantity}, AddedTime = N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' WHERE BuyerID = '{cart.BuyerID}' AND ProductID = '{cart.ProductID}'";
                         conn.Execute(updateQuanity);
                         return Ok(new { code = 200, message = $"Cap nhat gio hang thành công" });
                     }
@@ -129,8 +129,8 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkExist = $"SELECT * FROM Cart where BuyerID = N'{userID}' and ProductID = N'{productID}' and Status = 'Added'";
-                    string deleteItem = $"DELETE FROM Cart where BuyerID = N'{userID}' and ProductID = N'{productID}' and Status = 'Added'";
+                    string checkExist = $"SELECT * FROM Cart where BuyerID = N'{userID}' and ProductID = N'{productID}' ";
+                    string deleteItem = $"DELETE FROM Cart where BuyerID = N'{userID}' and ProductID = N'{productID}' ";
                     List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
 
                     if (cartQuerry.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy mặt hàng trong giỏ" });
@@ -156,8 +156,8 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string consumePending = $"SELECT c.buyerID, c.quantity,  c.status, c.ProductID, p.ID, p.Name, p.Price, p.Discount FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}' and c.Status = 'Added' ";
-                    string changeStatus = $"UPDATE Cart SET Status = 'Paid' where BuyerID =  N'{userID}' AND Status = 'Added' ";
+                    string consumePending = $"SELECT c.buyerID, c.quantity,  c.ProductID, p.ID, p.Name, p.Price, p.Discount FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}'  ";
+                    string changeStatus = $"DELETE FROM Cart where BuyerID =  N'{userID}' ";
                     var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(consumePending, (cart, product) =>
                     {
                         cart.Product = product;
@@ -172,9 +172,13 @@ namespace JWTAuthentication.Controllers
                         int total = 0;
                         foreach (CartModel c in query)
                         {
+<<<<<<< HEAD
                             total += (int)(c.Quantity * c.Product.Price * (1 - (float)c.Product.Discount / 100));
+=======
+                            total += c.Quantity * ( c.Product.Price - c.Product.Discount);
+>>>>>>> master
                         }
-                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{DateTime.Now.AddDays(7).ToString("yyyy-MM-dd HH:mm:ss")}' )";
+                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime,Status) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', null, 0 )";
                         conn.Execute(createBill);
                         return Ok(new { code = 200, message = "Thanh toán giỏ hàng thành công", detail = query });
                     }

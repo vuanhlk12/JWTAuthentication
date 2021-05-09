@@ -43,7 +43,72 @@ namespace JWTAuthentication.Controllers
                     {
                         List<BillModel> methods = conn.QueryAsync<BillModel>(query).Result.AsList();
                         if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
-                        else return Ok(new { code = 200, message = methods });
+                        else return Ok(new { code = 200, detail = methods });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail = e.Message });
+            }
+        }
+
+        [HttpPost("SetStatusCancel")]
+        public IActionResult SetCancel(string transID)//method nay chi thang seller hay admin co the thuc hien
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    
+                    string checkExist = $"SELECT * FROM Bill where Id = N'{transID}'";
+                    string setStatus = $"update bill set status = 2 where id = N'{transID}'";
+                    List<BillModel> trans = conn.QueryAsync<BillModel>(checkExist).Result.AsList();
+                    if (trans.Count == 0)
+                    {
+                        return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Giao dịch không tồn tại" });
+                    }
+                    else 
+                    {
+                        if (trans.FirstOrDefault().Status == 1 || trans.FirstOrDefault().Status == 2) return StatusCode(StatusCodes.Status403Forbidden, new { code = 403, message = "Giao dịch đã kết thúc" });
+                        else
+                        {
+                            conn.Execute(setStatus);
+                            return Ok(new { code = 200, message = "Hủy đơn hàng thành công" });
+                        }
+                    }
+                    
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail = e.Message });
+            }
+        }
+
+        [HttpPost("SetStatusDelivered")]
+        public IActionResult SetDeliver(string transID)//method nay chi thang seller hay admin co the thuc hien
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+
+                    string checkExist = $"SELECT * FROM Bill where ID = N'{transID}'";
+                    string setStatus = $"update bill set status = 1, shiptime = N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' where id = N'{transID}'";
+                    List<BillModel> trans = conn.QueryAsync<BillModel>(checkExist).Result.AsList();
+                    if (trans.Count == 0)
+                    {
+                        return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Giao dịch không tồn tại" });
+                    }
+                    else
+                    {
+                        if (trans.FirstOrDefault().Status == 1 || trans.FirstOrDefault().Status == 2) return StatusCode(StatusCodes.Status403Forbidden, new { code = 403, message = "Giao dịch đã kết thúc" });
+                        else
+                        {
+                            conn.Execute(setStatus);
+                            return Ok(new { code = 200, message = "Mua đơn hàng thành công" });
+                        }
                     }
                 }
             }

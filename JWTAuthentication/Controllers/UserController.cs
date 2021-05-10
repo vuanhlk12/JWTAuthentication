@@ -51,9 +51,13 @@ namespace JWTAuthentication.Controllers
                 try
                 {
                     string query = $"FROM AspNetUsers";
-                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
-                    List<UserModel> user = conn.Query<UserModel>(query).AsList();
-                    return Ok(new { code = 200, data = user });
+                    query = $"SELECT  * {query}";
+                    var listAll = conn.Query<UserModel>(query).AsList();
+
+
+                    int count = listAll.Count();
+                    var user = listAll.OrderBy(p => p.ID).Skip(size * page).Take(size).AsList();
+                    return Ok(new { code = 200, total = count, data = user });
                 }
                 catch (Exception ex)
                 {

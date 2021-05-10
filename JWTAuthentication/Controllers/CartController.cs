@@ -172,11 +172,7 @@ namespace JWTAuthentication.Controllers
                         int total = 0;
                         foreach (CartModel c in query)
                         {
-<<<<<<< HEAD
-                            total += (int)(c.Quantity * c.Product.Price * (1 - (float)c.Product.Discount / 100));
-=======
                             total += c.Quantity * ( c.Product.Price - c.Product.Discount);
->>>>>>> master
                         }
                         string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime,Status) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', null, 0 )";
                         conn.Execute(createBill);

@@ -156,7 +156,8 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string consumePending = $"SELECT c.buyerID, c.quantity,  c.ProductID, p.ID, p.Name, p.Price, p.Discount FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}'  ";
+                    //Vũ Anh sửa lại thành lấy hết
+                    string consumePending = $"SELECT c.*, p.* FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}'  ";
                     string changeStatus = $"DELETE FROM Cart where BuyerID =  N'{userID}' ";
                     var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(consumePending, (cart, product) =>
                     {
@@ -172,10 +173,19 @@ namespace JWTAuthentication.Controllers
                         int total = 0;
                         foreach (CartModel c in query)
                         {
-                            total += c.Quantity * ( c.Product.Price - c.Product.Discount);
+                            total += (int)(c.Quantity * c.Product.Price * (1 - (float)c.Product.Discount / 100));
                         }
-                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime,Status) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', null, 0 )";
+
+                        Guid BillID = Guid.NewGuid();
+                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime,Status) VALUES(N'{BillID}', N'{userID}', N'{listItem}', {total},N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', null, 0 )";
                         conn.Execute(createBill);
+
+                        foreach (CartModel c in query)//Vũ Anh thêm
+                        {
+                            string addToBillProduct = $"INSERT INTO BillProduct (ID, BillID, ProductID, ProductQuantity) VALUES('{Guid.NewGuid()}', '{BillID}', '{c.ProductID}', {c.Quantity})";
+                            conn.Execute(addToBillProduct);
+                        }
+
                         return Ok(new { code = 200, message = "Thanh toán giỏ hàng thành công", detail = query });
                     }
                 }

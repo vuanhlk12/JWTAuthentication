@@ -29,7 +29,7 @@ namespace JWTAuthentication.Authentication
         public DateTime LastModify { get; set; }
         public string StoreID { get; set; }
         public StoreModel Store { get; set; }
-        public string SoldQuanlity { get; set; }
+        public int SoldQuanlity { get; set; }
         public int RatingsCount { get; set; }
         public List<RatingModel> Ratings { get; set; }
         public double Star { get; set; }

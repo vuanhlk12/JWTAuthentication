@@ -101,7 +101,7 @@ namespace JWTAuthentication.Controllers
                                                  Discount = method.Discount,
                                                  Quanlity = method.Quanlity,
                                                  Image = method.Image,
-                                                 AddedTime =  method.AddedTime,
+                                                 AddedTime = method.AddedTime,
                                                  LastModify = method.LastModify,
                                                  StoreID = method.StoreID,
                                                  SoldQuanlity = method.SoldQuanlity,
@@ -110,7 +110,7 @@ namespace JWTAuthentication.Controllers
                                              }
                                          };
                         if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
-                        else return Ok(new { code = 200, detail = result });
+                        else return Ok(new { code = 200, test = "test", detail = result });
                     }
                 }
             }

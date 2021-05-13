@@ -63,5 +63,39 @@ namespace JWTAuthentication.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = e.Message });
             }
         }
+
+        [HttpGet("CancelOrder")]
+        public IActionResult CancelOrder(string billID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string checkExist = $"SELECT * FROM BillProduct where BillID = N'{billID}'";
+                    string getProductlist = $"select * from BillProduct where BillID = N'{billID}'";
+                    List<BillModel> bill = conn.QueryAsync<BillModel>(checkExist).Result.AsList();
+                    if (bill.Count == 0)
+                    {
+                        return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Bill không tồn tại" });
+                    }
+                    else
+                    {
+                        string delete = $"delete from BillProduct where BillID = N'{billID}'";
+                        List<BillProductModel> billProduct = conn.QueryAsync<BillProductModel>(getProductlist).Result.AsList();
+                        foreach(BillProductModel bp in billProduct)
+                        {
+                            string modify = $"Update Product set Quanlity = Quanlity + {bp.ProductQuantity} where id = N'{bp.ProductID}'";
+                            conn.Execute(modify);
+                        }
+                        conn.Execute(delete);
+                        return Ok(new { code = 200, message = "Hủy đơn thành công" });
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = e.Message });
+            }
+        }
     }
 }

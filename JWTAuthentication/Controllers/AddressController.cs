@@ -97,9 +97,34 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string query = $"INSERT INTO Address (ID, Address, Phone, UserID, DistrictID) VALUES('{Guid.NewGuid()}', '{address.Address}', '{address.Phone}', '{address.UserID}', '{address.DistrictID}')";
+                    string query = $"INSERT INTO Address (ID, Address, Phone, UserID, DistrictID, IsDefault) VALUES('{Guid.NewGuid()}', '{address.Address}', '{address.Phone}', '{address.UserID}', '{address.DistrictID}', 0)";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = "Thêm địa chỉ thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
+        [HttpPost("ChangeDefaultAddress")]
+        public IActionResult ChangeDefaultAddress([FromBody] string AddressID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string searchQuery = $"SELECT * FROM Address WHERE ID ='{AddressID}'";
+                    AddressModel address = conn.Query<AddressModel>(searchQuery).FirstOrDefault();
+
+                    string updateQuery = $"UPDATE Address SET IsDefault=0 WHERE UserID='{address.UserID}'";
+                    conn.Execute(updateQuery);
+
+                    string changeDefault = $"UPDATE Address SET IsDefault=1 WHERE ID='{AddressID}'";
+                    conn.Execute(changeDefault);
+
+                    return Ok(new { code = 200, message = "Đổi địa chỉ mặc định thành công" });
                 }
             }
             catch (Exception ex)

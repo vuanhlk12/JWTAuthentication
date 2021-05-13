@@ -10,6 +10,7 @@ namespace JWTAuthentication.Authentication
         public string Phone { get; set; }
         public string UserID { get; set; }
         public string DistrictID { get; set; }
+        public int IsDefault { get; set; }
         public CityModel City { get; set; }
         public DistrictModel District { get; set; }
     }

@@ -150,7 +150,7 @@ namespace JWTAuthentication.Controllers
 
 
         [HttpGet("ConfirmPayment")]
-        public IActionResult UserConfirmPayment(string userID)
+        public IActionResult UserConfirmPayment(string userID, string AddressID)
         {
             try
             {
@@ -173,23 +173,24 @@ namespace JWTAuthentication.Controllers
                         string transactionTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                         string listItem = JsonConvert.SerializeObject(query);
                         int total = 0;
-                        foreach (CartModel c in query)
+
+                        foreach (CartModel c in query)//Vũ Anh sửa, thêm khóa ngoại nên cần insert Bill trước
                         {
                             total += (int)(c.Quantity * c.Product.Price * (1 - (float)c.Product.Discount / 100));
-                            string addToBillProduct = $"INSERT INTO BillProduct (ID, BillID, ProductID, ProductQuantity,StoreID, TransactionTime) VALUES('{Guid.NewGuid()}', '{BillID}', '{c.ProductID}', {c.Quantity}, N'{c.Product.StoreID}',N'{transactionTime}' )";
+                        }
+
+                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime,Status,AddressID) VALUES(N'{BillID}', N'{userID}', N'{listItem}', {total},N'{transactionTime}', null, 0 , N'{AddressID}')";
+                        conn.Execute(createBill);
+
+                        foreach (CartModel c in query)
+                        {
+                            string addToBillProduct = $"INSERT INTO BillProduct (ID, BillID, ProductID, ProductQuantity,StoreID, TransactionTime) VALUES('{Guid.NewGuid()}', '{BillID}', '{c.ProductID}', {c.Quantity}, N'{c.Product.StoreID}',N'{transactionTime}')";
                             string updateProduct = $"update Product set Quanlity = Quanlity - {c.Quantity} where id = N'{c.ProductID}'";
 
                             conn.Execute(addToBillProduct);//them truong storeID de tien tra cuu
                             conn.Execute(updateProduct);//sua lai so hang ton du
                         }
-                 
-                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime,Status) VALUES(N'{BillID}', N'{userID}', N'{listItem}', {total},N'{transactionTime}', null, 0 )";
-                        conn.Execute(createBill);
-                        //foreach (CartModel c in query)//Vũ Anh thêm
-                        //{
-                           
 
-                        //}
                         return Ok(new { code = 200, message = "Thanh toán giỏ hàng thành công", detail = query });
                     }
                 }

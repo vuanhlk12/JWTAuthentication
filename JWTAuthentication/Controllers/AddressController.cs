@@ -41,6 +41,34 @@ namespace JWTAuthentication.Controllers
                 return Addresses;
             }
         }
+        public AddressModel _GetAddressByID(string AddressID)
+        {
+            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+            {
+                string query = $"SELECT * FROM Address a2 inner join District d2 on a2.DistrictID =d2.ID inner join City c2 on d2.CityID =c2.ID WHERE a2.ID ='{AddressID}'";
+                var Address = conn.QueryAsync<AddressModel, DistrictModel, CityModel, AddressModel>(query, (address, district, city) =>
+                {
+                    address.District = district;
+                    address.City = city;
+                    return address;
+                }, splitOn: "ID").Result.FirstOrDefault();
+                return Address;
+            }
+        }
+
+        [HttpGet("GetAddressByID")]
+        public IActionResult GetAddressByID(string AddressID)
+        {
+            try
+            {
+                AddressModel result = _GetAddressByID(AddressID);
+                return Ok(new { code = 200, message = result });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail = e.Message });
+            }
+        }
 
         [HttpGet("GetAddressByUser")]
         public IActionResult GetAddressByUser(string UserID)

@@ -73,6 +73,9 @@ namespace JWTAuthentication.Controllers
                                                b.BuyerID AS BuyerID,
                                                anu.UserName AS BuyerAccount,
                                                b.OrderTime,
+                                               b.AddressID,
+                                               b.Status AS BillStatus,
+                                               bp.ProductQuantity AS ProductQuantity,
                                                p.*
                                         FROM Bill b
                                         INNER JOIN BillProduct bp ON b.ID =bp.BillID
@@ -81,36 +84,53 @@ namespace JWTAuthentication.Controllers
                                         INNER JOIN AspNetUsers anu ON anu.Id = b.BuyerID
                                         WHERE s.ID = '{StoreID}'";
                         List<dynamic> methods = conn.QueryAsync<dynamic>(query).Result.AsList();
-                        dynamic result = from method in methods
-                                         select new
-                                         {
-                                             BillID = method.BillID,
-                                             BuyerID = method.BuyerID,
-                                             BuyerAccount = method.BuyerAccount,
-                                             OrderTime = method.OrderTime,
-                                             Product = new ProductModel
-                                             {
-                                                 ID = method.ID,
-                                                 Name = method.Name,
-                                                 Price = method.Price,
-                                                 Color = method.Color,
-                                                 Size = method.Size,
-                                                 Detail = method.Detail,
-                                                 Description = method.Description,
-                                                 CategoryID = method.CategoryID,
-                                                 Discount = method.Discount,
-                                                 Quanlity = method.Quanlity,
-                                                 Image = method.Image,
-                                                 AddedTime = method.AddedTime,
-                                                 LastModify = method.LastModify,
-                                                 StoreID = method.StoreID,
-                                                 SoldQuanlity = method.SoldQuanlity,
-                                                 Star = method.Star,
-                                                 RatingsCount = method.RatingsCount
-                                             }
-                                         };
+                        List<BillProductModel> modyfiedList = (from method in methods
+                                                               select new BillProductModel
+                                                               {
+                                                                   BillID = method.BillID,
+                                                                   BuyerID = method.BuyerID,
+                                                                   BuyerAccount = method.BuyerAccount,
+                                                                   OrderTime = method.OrderTime,
+                                                                   AddressID = method.AddressID,
+                                                                   BillStatus = method.BillStatus,
+                                                                   Product = new ProductModel
+                                                                   {
+                                                                       ID = method.ID,
+                                                                       Name = method.Name,
+                                                                       Price = method.Price,
+                                                                       Color = method.Color,
+                                                                       Size = method.Size,
+                                                                       Detail = method.Detail,
+                                                                       Description = method.Description,
+                                                                       CategoryID = method.CategoryID,
+                                                                       Discount = method.Discount,
+                                                                       Quanlity = method.ProductQuantity,
+                                                                       Image = method.Image,
+                                                                       AddedTime = method.AddedTime,
+                                                                       LastModify = method.LastModify,
+                                                                       StoreID = method.StoreID,
+                                                                       SoldQuanlity = method.SoldQuanlity,
+                                                                       Star = method.Star,
+                                                                       RatingsCount = method.RatingsCount
+                                                                   }
+                                                               }).ToList();
+
+                        var results = modyfiedList.GroupBy(
+                                p => (new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus }),
+                                p => p.Product,
+                                (key, g) => new BillProductModel
+                                {
+                                    BillID = key.BillID,
+                                    BuyerID = key.BuyerID,
+                                    BuyerAccount = key.BuyerAccount,
+                                    OrderTime = key.OrderTime,
+                                    AddressID = key.AddressID,
+                                    BillStatus = key.BillStatus,
+                                    Products = g.ToList()
+                                });
+
                         if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
-                        else return Ok(new { code = 200, test = "test", detail = result });
+                        else return Ok(new { code = 200, test = "test", detail = results });
                     }
                 }
             }

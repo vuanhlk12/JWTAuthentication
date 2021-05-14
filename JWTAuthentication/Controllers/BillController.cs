@@ -116,7 +116,7 @@ namespace JWTAuthentication.Controllers
                                                                }).ToList();
 
                         var results = modyfiedList.GroupBy(
-                                p => (new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus }),
+                                p => new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus },
                                 p => p.Product,
                                 (key, g) => new HistoryBillStoreModel
                                 {

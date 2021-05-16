@@ -130,7 +130,7 @@ namespace JWTAuthentication.Controllers
                                 });
 
                         if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
-                        else return Ok(new { code = 200, test = "test", detail = results });
+                        else return Ok(new { code = 200, detail = results });
                     }
                 }
             }

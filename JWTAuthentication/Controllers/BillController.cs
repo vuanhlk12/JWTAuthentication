@@ -115,7 +115,7 @@ namespace JWTAuthentication.Controllers
                                                                    }
                                                                }).ToList();
 
-                        var results = modyfiedList.GroupBy(
+                        var results = (modyfiedList.GroupBy(
                                 p => new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus },
                                 p => p.Product,
                                 (key, g) => new HistoryBillStoreModel
@@ -127,7 +127,7 @@ namespace JWTAuthentication.Controllers
                                     AddressID = key.AddressID,
                                     BillStatus = key.BillStatus,
                                     Products = g.ToList()
-                                });
+                                })).OrderByDescending(t => t.OrderTime);
 
                         if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
                         else return Ok(new { code = 200, detail = results });

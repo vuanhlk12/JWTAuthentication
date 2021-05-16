@@ -27,6 +27,7 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class AddressController : ControllerBase
     {
+
         public List<AddressModel> _GetAddressByUser(string UserID)
         {
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
@@ -136,6 +137,54 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [HttpPost("ChangeAddress")]
+        public IActionResult ChangeAddress(AddressModel address)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string searchQuery = $"SELECT * FROM Address WHERE ID ='{address.ID}'";
+                    AddressModel oldAddress = conn.Query<AddressModel>(searchQuery).FirstOrDefault();
+
+                    if(oldAddress == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy Address" });
+
+                    string updateQuery = $"UPDATE Address SET Address='{address.Address}', Phone='{address.Phone}', UserID='{oldAddress.UserID}', DistrictID='{address.DistrictID}', IsDefault={oldAddress.IsDefault} WHERE ID='{address.ID}'";
+                    conn.Execute(updateQuery);
+
+                    return Ok(new { code = 200, message = "Update địa chỉ thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
+        [HttpPost("DeleteAddress")]
+        public IActionResult DeleteAddress([FromBody] string AddressID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string searchQuery = $"SELECT * FROM Address WHERE ID ='{AddressID}'";
+                    AddressModel address = conn.Query<AddressModel>(searchQuery).FirstOrDefault();
+
+                    if (address == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy Address" });
+
+                    string deleteQuery = $"DELETE FROM Address WHERE ID='{AddressID}'";
+                    conn.Execute(deleteQuery);
+
+                    return Ok(new { code = 200, message = "Xóa địa chỉ thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
         [HttpPost("ChangeDefaultAddress")]
         public IActionResult ChangeDefaultAddress([FromBody] string AddressID)
         {
@@ -145,6 +194,8 @@ namespace JWTAuthentication.Controllers
                 {
                     string searchQuery = $"SELECT * FROM Address WHERE ID ='{AddressID}'";
                     AddressModel address = conn.Query<AddressModel>(searchQuery).FirstOrDefault();
+
+                    if (address == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy Address" });
 
                     string updateQuery = $"UPDATE Address SET IsDefault=0 WHERE UserID='{address.UserID}'";
                     conn.Execute(updateQuery);

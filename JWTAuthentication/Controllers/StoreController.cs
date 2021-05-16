@@ -88,7 +88,7 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetStoreByRange")]
         public IActionResult GetStoreByRange(int size, int page, int? aproveStatus = null, string searchKey = null)
         {
-            page--;
+            
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))

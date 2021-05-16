@@ -97,7 +97,7 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetProductByCategoryIDbyRange")]
         public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue, string searchKey = null)
         {
-            page--;
+            
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
@@ -224,7 +224,7 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetProductByStoreIDbyRange")]
         public IActionResult GetProductByStoreIDbyRange(int size, int page, string StoreID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue)
         {
-            page--;
+            
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
@@ -234,11 +234,12 @@ namespace JWTAuthentication.Controllers
                     if (fromPrice >= 0) query += $"and Price >={fromPrice}";
                     if (toPrice <= int.MaxValue) query += $"and Price <={toPrice}";
 
-                    string countQuery = $"SELECT COUNT(*) {query}";
-                    int count = conn.Query<int>(countQuery).FirstOrDefault();
+                    //query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
+                    query = $"SELECT  * {query}";
+                    var listAll = conn.Query<ProductModel>(query).AsList();
 
-                    query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
-                    List<ProductModel> products = conn.Query<ProductModel>(query).AsList();
+                    int count = listAll.Count();
+                    List<ProductModel> products = listAll.OrderBy(p => p.ID).Skip(size * page).Take(size).AsList();
 
                     return Ok(new { code = 200, total = count, message = products });
                 }

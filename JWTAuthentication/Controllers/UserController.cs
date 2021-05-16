@@ -45,7 +45,7 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetUserByRange")]
         public IActionResult GetUserByRange(int page = 0, int size = 0)
         {
-            page--;
+            
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
             {
                 try

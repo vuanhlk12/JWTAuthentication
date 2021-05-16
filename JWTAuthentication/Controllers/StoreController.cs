@@ -141,7 +141,11 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string query = $"INSERT INTO Store (ID,Name,Detail,CreateTime,OwnerID,Approved) VALUES (N'{Guid.NewGuid()}', N'{Store.Name}', N'{Store.Detail}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{Store.OwnerID}', 0); ";
+                    string checkStore = $"SELECT * FROM Store WHERE OwnerID ='{Store.OwnerID}'";
+                    var store = conn.Query<StoreModel>(checkStore).FirstOrDefault();
+                    if (store != null) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "User đã đăng ký cửa hàng" });
+
+                    string query = $"INSERT INTO Store (ID,Name,Detail,CreateTime,OwnerID,Approved,RatingsCount,FollowerCount,Star) VALUES (N'{Guid.NewGuid()}', N'{Store.Name}', N'{Store.Detail}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{Store.OwnerID}', 0,0,0,0); ";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = "Thêm cửa hàng thành công" });
                 }

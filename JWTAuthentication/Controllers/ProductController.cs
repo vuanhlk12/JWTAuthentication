@@ -97,7 +97,7 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetProductByCategoryIDbyRange")]
         public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue, string searchKey = null)
         {
-            
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
@@ -224,7 +224,7 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetProductByStoreIDbyRange")]
         public IActionResult GetProductByStoreIDbyRange(int size, int page, string StoreID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue)
         {
-            
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
@@ -258,6 +258,10 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
+                    string checkValidStore = $"SELECT * FROM Store WHERE ID= '{Product.StoreID}'";
+                    var store = conn.Query<StoreModel>(checkValidStore).FirstOrDefault();
+                    if (store.Approved != 1) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Cửa hàng đang bị khóa hoặc chưa được chấp nhận" });
+
                     string query = $"INSERT INTO Product (ID,Name,Price,Color,[Size],Detail,Description,CategoryID,Discount,Quanlity,[Image],AddedTime,LastModify,StoreID,SoldQuanlity,Star,RatingsCount) VALUES (N'{Guid.NewGuid()}', N'{Product.Name}', {Product.Price}, N'{Product.Color}', N'{Product.Size}', N'{Product.Detail}', N'{Product.Description}', N'{Product.CategoryID}', {Product.Discount}, {Product.Quanlity}, N'{Product.Image}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{Product.StoreID}', 0,0,0); ";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Thêm sản phẩm {Product.Name} thành công" });
@@ -276,6 +280,10 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
+                    string checkValidStore = $"SELECT * FROM Store WHERE ID= '{Product.StoreID}'";
+                    var store = conn.Query<StoreModel>(checkValidStore).FirstOrDefault();
+                    if (store.Approved != 1) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Cửa hàng đang bị khóa hoặc chưa được chấp nhận" });
+
                     string query = $"UPDATE Product SET Name=N'{Product.Name}', Price={Product.Price}, Color=N'{Product.Color}', [Size]=N'{Product.Size}', Detail=N'{Product.Detail}', Description=N'{Product.Description}', CategoryID=N'{Product.CategoryID}', Discount={Product.Discount}, Quanlity={Product.Quanlity}, [Image]=N'{Product.Image}', LastModify='{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', StoreID=N'{Product.StoreID}' WHERE ID='{Product.ID}'";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Sửa sản phẩm {Product.Name} thành công" });
@@ -294,6 +302,13 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
+                    string getProduct = $"SELECT * FROM Product WHERE ID= '{ProductID}'";
+                    var product = conn.Query<ProductModel>(getProduct).FirstOrDefault();
+
+                    string checkValidStore = $"SELECT * FROM Store WHERE ID= '{product.StoreID}'";
+                    var store = conn.Query<StoreModel>(checkValidStore).FirstOrDefault();
+                    if (store.Approved != 1) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Cửa hàng đang bị khóa hoặc chưa được chấp nhận" });
+
                     string query = $"DELETE FROM Product WHERE ID='{ProductID}'";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Xóa thành công" });

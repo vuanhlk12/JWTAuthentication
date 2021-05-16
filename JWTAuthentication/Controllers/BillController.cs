@@ -55,7 +55,7 @@ namespace JWTAuthentication.Controllers
 
         //Vũ Anh thêm get trans cho store
         [HttpGet("GetTransactionsStore")]
-        public IActionResult GetTransactionsStore(string StoreID)
+        public IActionResult GetTransactionsStore(int size, int page, string StoreID)
         {
             try
             {
@@ -127,7 +127,7 @@ namespace JWTAuthentication.Controllers
                                     AddressID = key.AddressID,
                                     BillStatus = key.BillStatus,
                                     Products = g.ToList()
-                                })).OrderByDescending(t => t.OrderTime);
+                                })).OrderByDescending(t => t.OrderTime).Skip(size * page).Take(size).AsList();
 
                         if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
                         else return Ok(new { code = 200, detail = results });

@@ -57,6 +57,24 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [HttpDelete("DeleteAllCart")]
+        public IActionResult DeleteAllCart([FromBody] string buyerID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string deleteQuery = $"DELETE FROM Cart WHERE BuyerID ='{buyerID}'";
+                    conn.Execute(deleteQuery);
+                    return Ok(new { code = 200, message = "Đã xóa toàn bộ giỏ hàng" });
+                }
+            }
+            catch
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra" });
+            }
+        }
+
         [HttpGet("ProductInCart")]
         public IActionResult GetBuyerProductInCart(string buyerID, string productID)
         {

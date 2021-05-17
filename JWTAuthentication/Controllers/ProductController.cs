@@ -262,6 +262,13 @@ namespace JWTAuthentication.Controllers
                     var store = conn.Query<StoreModel>(checkValidStore).FirstOrDefault();
                     if (store.Approved != 1) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Cửa hàng đang bị khóa hoặc chưa được chấp nhận" });
 
+                    Product.Name = Product.Name.Replace("'", "''");
+                    Product.Color = Product.Color.Replace("'", "''");
+                    Product.Size = Product.Size.Replace("'", "''");
+                    Product.Image = Product.Image.Replace("'", "''");
+                    Product.Description = Product.Description.Replace("'", "''");
+                    Product.Detail = Product.Detail.Replace("'", "''");
+
                     string query = $"INSERT INTO Product (ID,Name,Price,Color,[Size],Detail,Description,CategoryID,Discount,Quanlity,[Image],AddedTime,LastModify,StoreID,SoldQuanlity,Star,RatingsCount) VALUES (N'{Guid.NewGuid()}', N'{Product.Name}', {Product.Price}, N'{Product.Color}', N'{Product.Size}', N'{Product.Detail}', N'{Product.Description}', N'{Product.CategoryID}', {Product.Discount}, {Product.Quanlity}, N'{Product.Image}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{Product.StoreID}', 0,0,0); ";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Thêm sản phẩm {Product.Name} thành công" });
@@ -284,7 +291,18 @@ namespace JWTAuthentication.Controllers
                     var store = conn.Query<StoreModel>(checkValidStore).FirstOrDefault();
                     if (store.Approved != 1) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Cửa hàng đang bị khóa hoặc chưa được chấp nhận" });
 
-                    string query = $"UPDATE Product SET Name=N'{Product.Name}', Price={Product.Price}, Color=N'{Product.Color}', [Size]=N'{Product.Size}', Detail=N'{Product.Detail}', Description=N'{Product.Description}', CategoryID=N'{Product.CategoryID}', Discount={Product.Discount}, Quanlity={Product.Quanlity}, [Image]=N'{Product.Image}', LastModify='{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', StoreID=N'{Product.StoreID}' WHERE ID='{Product.ID}'";
+                    string productQuery = $"SELECT * FROM Product WHERE ID='{Product.ID}'";
+                    var oldProduct = conn.Query<ProductModel>(productQuery).FirstOrDefault();
+                    if (oldProduct == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy sản phẩm" });
+
+                    Product.Name = Product.Name.Replace("'", "''");
+                    Product.Color = Product.Color.Replace("'", "''");
+                    Product.Size = Product.Size.Replace("'", "''");
+                    Product.Image = Product.Image.Replace("'", "''");
+                    Product.Description = Product.Description.Replace("'", "''");
+                    Product.Detail = Product.Detail.Replace("'", "''");
+
+                    string query = $"UPDATE Product SET Name=N'{(string.IsNullOrEmpty(Product.Name) ? oldProduct.Name : Product.Name)}', Price={(Product.Price ?? oldProduct.Price)}, Color=N'{(string.IsNullOrEmpty(Product.Color) ? oldProduct.Color : Product.Color)}', [Size]=N'{(string.IsNullOrEmpty(Product.Size) ? oldProduct.Size : Product.Size)}', Detail=N'{(string.IsNullOrEmpty(Product.Detail) ? oldProduct.Detail : Product.Detail)}', Description=N'{(string.IsNullOrEmpty(Product.Description) ? oldProduct.Description : Product.Description)}', CategoryID=N'{(string.IsNullOrEmpty(Product.CategoryID) ? oldProduct.CategoryID : Product.CategoryID)}', Discount={(Product.Discount ?? oldProduct.Discount)}, Quanlity={(Product.Quanlity ?? oldProduct.Quanlity)}, [Image]=N'{(string.IsNullOrEmpty(Product.Image) ? oldProduct.Image : Product.Image)}', LastModify='{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' WHERE ID='{Product.ID}'";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Sửa sản phẩm {Product.Name} thành công" });
                 }

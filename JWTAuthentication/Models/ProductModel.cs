@@ -8,15 +8,15 @@ namespace JWTAuthentication.Authentication
     {
         public string ID { get; set; }
         public string Name { get; set; }
-        public int Price { get; set; }
+        public int? Price { get; set; }
         public string Color { get; set; }
         public string Size { get; set; }
         public string Detail { get; set; }
         public string Description { get; set; }
         public string CategoryID { get; set; }
         public CategoryModel Category { get; set; }
-        public int Discount { get; set; }
-        public int Quanlity { get; set; }
+        public int? Discount { get; set; }
+        public int? Quanlity { get; set; }
         public string Image { get; set; }
         public List<string> Images
         {

@@ -114,6 +114,8 @@ namespace JWTAuthentication.Controllers
             var UserName = User.Identity.Name;
             var user = await userManager.FindByNameAsync(User.Identity.Name);
 
+            if (user == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User not found" });
+
             //update
             user.Email = model.Email;
             user.FirstName = model.FirstName;
@@ -149,6 +151,28 @@ namespace JWTAuthentication.Controllers
             {
                 return Ok(new { code = 200, message = message });
             }
+        }
+
+        [HttpPost]
+        [Route("ChangePassword")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangeInfoModel model)
+        {
+            var UserName = User.Identity.Name;
+            var user = await userManager.FindByNameAsync(User.Identity.Name);
+
+            if (user == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User not found" });
+
+            var result = await userManager.ChangePasswordAsync(user, model.Password, model.NewPassword);
+            if (result.Succeeded)
+            {
+                return Ok(new { code = 200, message = $"Tài khoản {UserName} đã thay đổi mật khẩu thành công" });
+            }
+            else
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"Đã có lỗi: {result.Errors.First().Description}" });
+            }
+
         }
 
         [HttpGet]

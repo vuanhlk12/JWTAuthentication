@@ -204,5 +204,60 @@ namespace JWTAuthentication.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail = e.Message });
             }
         }
+
+        [HttpGet("GetBillByTime")]
+        public IActionResult GetBillByTime(string mode, int previous)//method nay chi thang seller hay admin co the thuc hien
+        {
+            /*  mode chi co the la week hay month
+             *  previous là so tuan (thang) truoc do. Neu de previous la 0 thi search theo tuan(thang) hien tai
+             * */
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+
+                    string selectByWeek = $"SELECT * FROM Bill where DATEPART(wk, OrderTime) = DATEPART(wk, GETDATE()) - {previous} and DATEPART(yy, OrderTime) = DATEPART(yy, GETDATE())";
+                    string selectByMonth = $"SELECT * FROM Bill where DATEPART(mm, OrderTime) = DATEPART(mm, GETDATE()) - {previous} and DATEPART(yy, OrderTime) = DATEPART(yy, GETDATE())";
+                    if (mode == "week")
+                    {
+                        List<BillModel> trans = conn.QueryAsync<BillModel>(selectByWeek).Result.AsList();
+                        if (trans.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Giao dịch không tồn tại" });
+                        else return Ok(new { code = 200, detail = trans });
+                    }
+                    else if (mode == "month")
+                    {
+                        List<BillModel> trans2 = conn.QueryAsync<BillModel>(selectByWeek).Result.AsList();
+                        if (trans2.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Giao dịch không tồn tại" });
+                        else return Ok(new { code = 200, detail = trans2 });
+                    }
+                    else return StatusCode(StatusCodes.Status403Forbidden, new { code = 403, message = "mode only 'week' or 'month' " });
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xay ra", detail = e.Message });
+            }
+        }
+
+        [HttpGet("GetBillByDate")]
+        public IActionResult GetBillByDate(int date, int month, int year)//method nay chi thang seller hay admin co the thuc hien
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+
+                    string selectByDate = $"SELECT * FROM Bill where DATEPART(dd, OrderTime) = {date} and DATEPART(mm,OrderTime) = {month}  and DATEPART(yy, OrderTime) = {year}";
+                    List<BillModel> trans = conn.QueryAsync<BillModel>(selectByDate).Result.AsList();
+                    if (trans.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Giao dịch không tồn tại" });
+                    else return Ok(new { code = 200, detail = trans });
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xay ra", detail = e.Message });
+            }
+        }
+
     }
 }

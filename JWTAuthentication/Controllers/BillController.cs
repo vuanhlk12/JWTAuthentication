@@ -84,6 +84,8 @@ namespace JWTAuthentication.Controllers
                                         INNER JOIN AspNetUsers anu ON anu.Id = b.BuyerID
                                         WHERE s.ID = '{StoreID}'";
                         List<dynamic> methods = conn.QueryAsync<dynamic>(query).Result.AsList();
+                        if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
+
                         List<BillProductModel> modyfiedList = (from method in methods
                                                                select new BillProductModel
                                                                {
@@ -129,7 +131,7 @@ namespace JWTAuthentication.Controllers
                                     Products = g.ToList()
                                 })).OrderByDescending(t => t.OrderTime).Skip(size * page).Take(size).AsList();
 
-                        if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
+                        if (results.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Page này không có kết quả" });
                         else return Ok(new { code = 200, detail = results });
                     }
                 }

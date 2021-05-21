@@ -161,11 +161,12 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        [HttpPost("DeleteAddress")]
-        public IActionResult DeleteAddress([FromBody] string AddressID)
+        [HttpDelete("DeleteAddress")]
+        public IActionResult DeleteAddress(object _object)
         {
             try
             {
+                string AddressID = _object.ToString();
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
                     string searchQuery = $"SELECT * FROM Address WHERE ID ='{AddressID}'";

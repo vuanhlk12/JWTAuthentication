@@ -147,7 +147,7 @@ namespace JWTAuthentication.Controllers
                     string searchQuery = $"SELECT * FROM Address WHERE ID ='{address.ID}'";
                     AddressModel oldAddress = conn.Query<AddressModel>(searchQuery).FirstOrDefault();
 
-                    if(oldAddress == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy Address" });
+                    if (oldAddress == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy Address" });
 
                     string updateQuery = $"UPDATE Address SET Address='{address.Address}', Phone='{address.Phone}', UserID='{oldAddress.UserID}', DistrictID='{address.DistrictID}', IsDefault={oldAddress.IsDefault} WHERE ID='{address.ID}'";
                     conn.Execute(updateQuery);
@@ -162,11 +162,11 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpDelete("DeleteAddress")]
-        public IActionResult DeleteAddress(object _object)
+        public IActionResult DeleteAddress(dynamic AddressID)
         {
             try
             {
-                string AddressID = _object.ToString();
+                AddressID = AddressID.ToString();
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
                     string searchQuery = $"SELECT * FROM Address WHERE ID ='{AddressID}'";

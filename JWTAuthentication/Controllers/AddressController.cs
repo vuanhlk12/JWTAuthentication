@@ -126,7 +126,7 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkQuery = $"SELECT * FROM Address WHERE UserID ='{address.UserID}'";
+                    string checkQuery = $"SELECT * FROM Address WHERE UserID ='{address.UserID}' AND IsDefault =1";
                     AddressModel _address = conn.Query<AddressModel>(checkQuery).FirstOrDefault();
 
                     if (_address == null)

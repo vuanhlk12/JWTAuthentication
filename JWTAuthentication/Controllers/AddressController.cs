@@ -186,6 +186,30 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [HttpDelete("DeleteAddress/{AddressID}")]
+        public IActionResult DeleteAddress(string AddressID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string searchQuery = $"SELECT * FROM Address WHERE ID ='{AddressID}'";
+                    AddressModel address = conn.Query<AddressModel>(searchQuery).FirstOrDefault();
+
+                    if (address == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy Address" });
+
+                    string deleteQuery = $"DELETE FROM Address WHERE ID='{AddressID}'";
+                    conn.Execute(deleteQuery);
+
+                    return Ok(new { code = 200, message = "Xóa địa chỉ thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
         [HttpPost("ChangeDefaultAddress")]
         public IActionResult ChangeDefaultAddress([FromBody] string AddressID)
         {

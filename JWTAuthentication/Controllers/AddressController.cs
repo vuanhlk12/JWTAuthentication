@@ -126,9 +126,21 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string query = $"INSERT INTO Address (ID, Address, Phone, UserID, DistrictID, IsDefault) VALUES('{Guid.NewGuid()}', '{address.Address}', '{address.Phone}', '{address.UserID}', '{address.DistrictID}', 0)";
-                    conn.Execute(query);
-                    return Ok(new { code = 200, message = "Thêm địa chỉ thành công" });
+                    string checkQuery = $"SELECT * FROM Address WHERE UserID ='{address.UserID}'";
+                    AddressModel _address = conn.Query<AddressModel>(checkQuery).FirstOrDefault();
+
+                    if (_address == null)
+                    {
+                        string query = $"INSERT INTO Address (ID, Address, Phone, UserID, DistrictID, IsDefault) VALUES('{Guid.NewGuid()}', '{address.Address}', '{address.Phone}', '{address.UserID}', '{address.DistrictID}', 1)";
+                        conn.Execute(query);
+                        return Ok(new { code = 200, message = "Thêm địa chỉ và đặt địa chỉ làm mặc định thành công" });
+                    }
+                    else
+                    {
+                        string query = $"INSERT INTO Address (ID, Address, Phone, UserID, DistrictID, IsDefault) VALUES('{Guid.NewGuid()}', '{address.Address}', '{address.Phone}', '{address.UserID}', '{address.DistrictID}', 0)";
+                        conn.Execute(query);
+                        return Ok(new { code = 200, message = "Thêm địa chỉ thành công" });
+                    }
                 }
             }
             catch (Exception ex)
@@ -208,10 +220,10 @@ namespace JWTAuthentication.Controllers
                         string searchAnother = $"SELECT * FROM Address WHERE UserID ='{address.UserID}' AND IsDefault =0";
                         AddressModel anotherDefaultAddress = conn.Query<AddressModel>(searchAnother).FirstOrDefault();
 
-                        if(anotherDefaultAddress == null) return Ok(new { code = 200, message = "Xóa địa chỉ thành công, đặt địa chỉ mặc định mới thất bại do người dùng không còn địa chỉ nào khác!" });
+                        if (anotherDefaultAddress == null) return Ok(new { code = 200, message = "Xóa địa chỉ thành công, đặt địa chỉ mặc định mới thất bại do người dùng không còn địa chỉ nào khác!" });
 
                         string setAnotherDefaultQuery = $"UPDATE Address SET IsDefault=1 WHERE ID='{anotherDefaultAddress.ID}'";
-                        conn.Execute(deleteQuery);
+                        conn.Execute(setAnotherDefaultQuery);
 
                         return Ok(new { code = 200, message = "Xóa địa chỉ thành công, đặt địa chỉ mặc định mới thành công!" });
                     }

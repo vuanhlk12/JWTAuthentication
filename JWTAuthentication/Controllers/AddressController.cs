@@ -32,7 +32,7 @@ namespace JWTAuthentication.Controllers
         {
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
             {
-                string query = $"SELECT * FROM Address a2 inner join District d2 on a2.DistrictID =d2.ID inner join City c2 on d2.CityID =c2.ID WHERE a2.UserID ='{UserID}'";
+                string query = $"SELECT * FROM Address a2 inner join District d2 on a2.DistrictID =d2.ID inner join City c2 on d2.CityID =c2.ID WHERE a2.UserID ='{UserID}'  AND IsDefault <2";
                 var Addresses = conn.QueryAsync<AddressModel, DistrictModel, CityModel, AddressModel>(query, (address, district, city) =>
                  {
                      address.District = district;
@@ -174,8 +174,10 @@ namespace JWTAuthentication.Controllers
 
                     if (address == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy Address" });
 
-                    string deleteQuery = $"DELETE FROM Address WHERE ID='{AddressID}'";
+                    string deleteQuery = $"UPDATE Address SET IsDefault=2 WHERE ID='{AddressID}'";
                     conn.Execute(deleteQuery);
+
+
 
                     return Ok(new { code = 200, message = "Xóa địa chỉ thành công" });
                 }
@@ -198,8 +200,21 @@ namespace JWTAuthentication.Controllers
 
                     if (address == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy Address" });
 
-                    string deleteQuery = $"DELETE FROM Address WHERE ID='{AddressID}'";
+                    string deleteQuery = $"UPDATE Address SET IsDefault=2 WHERE ID='{AddressID}'";
                     conn.Execute(deleteQuery);
+
+                    if (address.IsDefault == 1)
+                    {
+                        string searchAnother = $"SELECT * FROM Address WHERE UserID ='{address.UserID}' AND IsDefault =0";
+                        AddressModel anotherDefaultAddress = conn.Query<AddressModel>(searchAnother).FirstOrDefault();
+
+                        if(anotherDefaultAddress == null) return Ok(new { code = 200, message = "Xóa địa chỉ thành công, đặt địa chỉ mặc định mới thất bại do người dùng không còn địa chỉ nào khác!" });
+
+                        string setAnotherDefaultQuery = $"UPDATE Address SET IsDefault=1 WHERE ID='{anotherDefaultAddress.ID}'";
+                        conn.Execute(deleteQuery);
+
+                        return Ok(new { code = 200, message = "Xóa địa chỉ thành công, đặt địa chỉ mặc định mới thành công!" });
+                    }
 
                     return Ok(new { code = 200, message = "Xóa địa chỉ thành công" });
                 }

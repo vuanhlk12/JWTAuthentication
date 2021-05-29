@@ -95,7 +95,7 @@ namespace JWTAuthentication.Controllers
 
 
         [HttpGet("GetProductByCategoryIDbyRange")]
-        public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue, string searchKey = null)
+        public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue, string searchKey = null, string StoreID = null)
         {
 
             try
@@ -140,7 +140,12 @@ namespace JWTAuthentication.Controllers
 
                     //query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
                     query = $"SELECT  * {query}";
+
                     var listAll = conn.Query<ProductModel>(query).AsList();
+                    if (StoreID != null)
+                    {
+                        listAll = listAll.Where(p => p.StoreID == StoreID).ToList();
+                    }
 
                     if (searchKey != null)
                     {
@@ -222,7 +227,7 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpGet("GetProductByStoreIDbyRange")]
-        public IActionResult GetProductByStoreIDbyRange(int size, int page, string StoreID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue)
+        public IActionResult GetProductByStoreIDbyRange(int size, int page, string StoreID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue, string CategoryID = null)
         {
 
             try
@@ -234,9 +239,18 @@ namespace JWTAuthentication.Controllers
                     if (fromPrice >= 0) query += $"and Price >={fromPrice}";
                     if (toPrice <= int.MaxValue) query += $"and Price <={toPrice}";
 
-                    //query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
                     query = $"SELECT  * {query}";
                     var listAll = conn.Query<ProductModel>(query).AsList();
+
+                    if (CategoryID != null)
+                    {
+                        CategoryController categoryController = new CategoryController();
+                        List<CategoryModel> categories = categoryController.GetCategoryAllChildList(CategoryID);
+                        foreach (CategoryModel category in categories)
+                        {
+                            listAll = listAll.Where(p => p.CategoryID == category.Id).ToList();
+                        }
+                    }
 
                     int count = listAll.Count();
                     List<ProductModel> products = listAll.OrderBy(p => p.ID).Skip(size * page).Take(size).AsList();

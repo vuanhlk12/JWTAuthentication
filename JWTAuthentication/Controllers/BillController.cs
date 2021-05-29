@@ -55,7 +55,7 @@ namespace JWTAuthentication.Controllers
 
         //Vũ Anh thêm get trans cho store
         [HttpGet("GetTransactionsStore")]
-        public IActionResult GetTransactionsStore(int size, int page, string StoreID)
+        public IActionResult GetTransactionsStore(int size, int page, string StoreID, DateTime? fromDate = null, DateTime? toDate = null)
         {
             try
             {
@@ -131,8 +131,11 @@ namespace JWTAuthentication.Controllers
                                     Products = g.ToList()
                                 })).OrderByDescending(t => t.OrderTime).Skip(size * page).Take(size).AsList();
 
+                        if (fromDate != null) results = results.Where(p => p.OrderTime >= fromDate).ToList();
+                        if (toDate != null) results = results.Where(p => p.OrderTime <= ((DateTime)toDate).AddDays(1)).ToList();
+
                         if (results.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Page này không có kết quả" });
-                        else return Ok(new { code = 200, detail = results });
+                        else return Ok(new { code = 200, total = results.Count, detail = results });
                     }
                 }
             }

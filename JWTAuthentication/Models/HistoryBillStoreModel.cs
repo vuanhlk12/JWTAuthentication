@@ -12,7 +12,7 @@ namespace JWTAuthentication.Authentication
         public string BuyerAccount { get; set; }
         public DateTime OrderTime { get; set; }
         public string AddressID { get; set; }
-        public int BillStatus { get; set; }
+        public int Status { get; set; }
         public int ProductsTotal
         {
             get

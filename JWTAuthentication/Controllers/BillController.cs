@@ -127,13 +127,15 @@ namespace JWTAuthentication.Controllers
                                     BuyerAccount = key.BuyerAccount,
                                     OrderTime = key.OrderTime,
                                     AddressID = key.AddressID,
-                                    BillStatus = key.BillStatus,
+                                    Status = key.BillStatus,
                                     Products = g.ToList()
-                                })).OrderByDescending(t => t.OrderTime).Skip(size * page).Take(size).AsList();
+                                })).OrderByDescending(t => t.OrderTime).AsList();
 
                         if (fromDate != null) results = results.Where(p => p.OrderTime >= fromDate).ToList();
                         if (toDate != null) results = results.Where(p => p.OrderTime <= ((DateTime)toDate).AddDays(1)).ToList();
-                        if (status != null) results = results.Where(p => p.BillStatus == status).ToList();
+                        if (status != null) results = results.Where(p => p.Status == status).ToList();
+
+                        results = results.Skip(size * page).Take(size).AsList();
 
                         if (results.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Page này không có kết quả" });
                         else return Ok(new { code = 200, total = results.Count, detail = results });

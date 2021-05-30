@@ -131,11 +131,11 @@ namespace JWTAuthentication.Controllers
                                     Products = g.ToList()
                                 })).OrderByDescending(t => t.OrderTime).AsList();
 
-                        int total = results.Count;
-
                         if (fromDate != null) results = results.Where(p => p.OrderTime >= fromDate).ToList();
                         if (toDate != null) results = results.Where(p => p.OrderTime <= ((DateTime)toDate).AddDays(1)).ToList();
                         if (status != null) results = results.Where(p => p.Status == status).ToList();
+
+                        int total = results.Count;
 
                         results = results.Skip(size * page).Take(size).AsList();
 

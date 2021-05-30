@@ -11,6 +11,7 @@ namespace JWTAuthentication.Authentication
         public string BuyerID { get; set; }
         public string BuyerAccount { get; set; }
         public DateTime OrderTime { get; set; }
+        public DateTime? ShipTime { get; set; }
         public string AddressID { get; set; }
         public int Status { get; set; }
         public int ProductsTotal

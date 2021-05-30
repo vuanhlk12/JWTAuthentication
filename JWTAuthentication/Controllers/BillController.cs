@@ -73,6 +73,7 @@ namespace JWTAuthentication.Controllers
                                                b.BuyerID AS BuyerID,
                                                anu.UserName AS BuyerAccount,
                                                b.OrderTime,
+                                               b.ShipTime,
                                                b.AddressID,
                                                b.Status AS BillStatus,
                                                bp.ProductQuantity AS ProductQuantity,
@@ -93,6 +94,7 @@ namespace JWTAuthentication.Controllers
                                                                    BuyerID = method.BuyerID,
                                                                    BuyerAccount = method.BuyerAccount,
                                                                    OrderTime = method.OrderTime,
+                                                                   ShipTime = method.ShipTime,
                                                                    AddressID = method.AddressID,
                                                                    BillStatus = method.BillStatus,
                                                                    Product = new ProductModel
@@ -118,7 +120,7 @@ namespace JWTAuthentication.Controllers
                                                                }).ToList();
 
                         var results = (modyfiedList.GroupBy(
-                                p => new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus },
+                                p => new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus, p.ShipTime },
                                 p => p.Product,
                                 (key, g) => new HistoryBillStoreModel
                                 {
@@ -126,6 +128,7 @@ namespace JWTAuthentication.Controllers
                                     BuyerID = key.BuyerID,
                                     BuyerAccount = key.BuyerAccount,
                                     OrderTime = key.OrderTime,
+                                    ShipTime = key.ShipTime,
                                     AddressID = key.AddressID,
                                     Status = key.BillStatus,
                                     Products = g.ToList()

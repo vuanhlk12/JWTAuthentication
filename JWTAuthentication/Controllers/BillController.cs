@@ -131,6 +131,8 @@ namespace JWTAuthentication.Controllers
                                     Products = g.ToList()
                                 })).OrderByDescending(t => t.OrderTime).AsList();
 
+                        int total = results.Count;
+
                         if (fromDate != null) results = results.Where(p => p.OrderTime >= fromDate).ToList();
                         if (toDate != null) results = results.Where(p => p.OrderTime <= ((DateTime)toDate).AddDays(1)).ToList();
                         if (status != null) results = results.Where(p => p.Status == status).ToList();
@@ -138,7 +140,7 @@ namespace JWTAuthentication.Controllers
                         results = results.Skip(size * page).Take(size).AsList();
 
                         if (results.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Page này không có kết quả" });
-                        else return Ok(new { code = 200, total = results.Count, detail = results });
+                        else return Ok(new { code = 200, total = total, detail = results });
                     }
                 }
             }

@@ -198,7 +198,7 @@ namespace JWTAuthentication.Controllers
                     string storeQuery = $"SELECT * FROM Store WHERE id = '{products.StoreID}'";
                     StoreModel store = conn.Query<StoreModel>(storeQuery).FirstOrDefault();
 
-                    string ratingQuery = $"SELECT r.* FROM Product p inner join Cart c on p.ID = c.ProductID inner join Rating r on c.ID =r.CartID WHERE p.ID = '{ProductID}'";
+                    string ratingQuery = $"SELECT * FROM Product p inner join Rating r on p.ID = r.ProductID WHERE p.ID = '{ProductID}'";
                     List<RatingModel> ratings = conn.Query<RatingModel>(ratingQuery).AsList();
 
                     float starSum = 0;

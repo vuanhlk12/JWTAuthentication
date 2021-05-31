@@ -117,7 +117,7 @@ namespace JWTAuthentication.Controllers
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
             {
                 string query = $"SELECT * FROM Product p inner join Rating r on p.ID = r.ProductID WHERE p.ID = '{ProductID}'";
-                List<RatingModel> ratings = conn.Query<RatingModel>(query).AsList();
+                List<RatingModel> ratings = conn.Query<RatingModel>(query).OrderByDescending(p => p.Time).AsList();
                 return ratings;
             }
         }

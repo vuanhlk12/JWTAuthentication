@@ -25,15 +25,28 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class BillController : ControllerBase
     {
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IConfiguration _configuration;
+
+        public BillController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        {
+            this.userManager = userManager;
+            this.roleManager = roleManager;
+            _configuration = configuration;
+        }
+
+        [Authorize]
         [HttpGet("GetTransactions")]
-        public IActionResult GetAllTransaction(string userID)
+        public async Task<IActionResult> GetAllTransactionAsync(string userID = null)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkExist = $"SELECT * FROM AspNetUsers where Id = N'{userID}'";
-                    string query = $"SELECT * FROM Bill where BuyerID = '{userID}'";
+                    string checkExist = $"SELECT * FROM AspNetUsers where Id = N'{user.Id}'";
+                    string query = $"SELECT * FROM Bill where BuyerID = '{user.Id}'";
                     List<UserModel> users = conn.QueryAsync<UserModel>(checkExist).Result.AsList();
                     if (users.Count == 0)
                     {
@@ -54,6 +67,7 @@ namespace JWTAuthentication.Controllers
         }
 
         //Vũ Anh thêm get trans cho store
+        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpGet("GetTransactionsStore")]
         public IActionResult GetTransactionsStore(int size, int page, string StoreID, DateTime? fromDate = null, DateTime? toDate = null, int? status = null)
         {
@@ -153,6 +167,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpPost("SetStatusCancel")]
         public IActionResult SetCancel(string transID)//method nay chi thang seller hay admin co the thuc hien
         {
@@ -186,6 +201,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpPost("SetStatusDelivered")]
         public IActionResult SetDeliver(string transID)//method nay chi thang seller hay admin co the thuc hien
         {
@@ -218,6 +234,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpGet("GetBillByTime")]
         public IActionResult GetBillByTime(string mode, int previous)//method nay chi thang seller hay admin co the thuc hien
         {
@@ -252,6 +269,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpGet("GetBillByDate")]
         public IActionResult GetBillByDate(int date, int month, int year)//method nay chi thang seller hay admin co the thuc hien
         {

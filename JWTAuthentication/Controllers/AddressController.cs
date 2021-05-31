@@ -27,7 +27,16 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class AddressController : ControllerBase
     {
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IConfiguration _configuration;
 
+        public AddressController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        {
+            this.userManager = userManager;
+            this.roleManager = roleManager;
+            _configuration = configuration;
+        }
         public List<AddressModel> _GetAddressByUser(string UserID)
         {
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
@@ -71,12 +80,14 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet("GetAddressByUser")]
-        public IActionResult GetAddressByUser(string UserID)
+        public async Task<IActionResult> GetAddressByUserAsync(string UserID = null)
         {
             try
             {
-                List<AddressModel> result = _GetAddressByUser(UserID);
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
+                List<AddressModel> result = _GetAddressByUser(user.Id);
                 return Ok(new { code = 200, message = result });
             }
             catch (Exception e)

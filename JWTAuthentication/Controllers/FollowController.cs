@@ -26,6 +26,17 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class FollowController : ControllerBase
     {
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IConfiguration _configuration;
+
+        public FollowController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        {
+            this.userManager = userManager;
+            this.roleManager = roleManager;
+            _configuration = configuration;
+        }
+
         [HttpGet("GetFollower")]
         public IActionResult GetStoreFollower(string storeID)
         {
@@ -45,26 +56,28 @@ namespace JWTAuthentication.Controllers
 
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail  = e.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail = e.Message });
             }
-          
-               
+
+
         }
 
+        [Authorize]
         [HttpPost("AddFollow")]
-        public IActionResult FollowStore(string userID, string storeID)
+        public async Task<IActionResult> FollowStoreAsync(string storeID, string userID = null)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkExist = $"SELECT * from [Following] where UserID = N'{userID}' and StoreID = N'{storeID}'";
-                    string querry = $"INSERT INTO [Following](ID,UserID,StoreID,FollowTime) VALUES(N'{Guid.NewGuid()}', N'{userID}', N'{storeID}' , N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}')";
+                    string checkExist = $"SELECT * from [Following] where UserID = N'{user.Id}' and StoreID = N'{storeID}'";
+                    string querry = $"INSERT INTO [Following](ID,UserID,StoreID,FollowTime) VALUES(N'{Guid.NewGuid()}', N'{user.Id}', N'{storeID}' , N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}')";
                     string addFollower = $"UPDATE Store SET FollowerCount = FollowerCount + 1 where ID = N'{storeID}'";
                     List<FollowingModel> result = conn.QueryAsync<FollowingModel>(checkExist).Result.AsList();
-                    if(result.Count > 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Người dùng đã theo dõi" });
+                    if (result.Count > 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Người dùng đã theo dõi" });
                     else
                     {
                         conn.Execute(querry);
@@ -79,22 +92,24 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize]
         [HttpDelete("Unfollow")]
-        public IActionResult UnfollowStore(string userID, string storeID)
+        public async Task<IActionResult> UnfollowStoreAsync(string storeID, string userID = null)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkExist = $"SELECT * from [Following] where UserID = N'{userID}' and StoreID = N'{storeID}'";
-                    string querry = $"DELETE from [Following] where UserID = N'{userID}' and StoreID = N'{storeID}' ";
+                    string checkExist = $"SELECT * from [Following] where UserID = N'{user.Id}' and StoreID = N'{storeID}'";
+                    string querry = $"DELETE from [Following] where UserID = N'{user.Id}' and StoreID = N'{storeID}' ";
                     string deleteFollower = $"UPDATE Store SET FollowerCount = FollowerCount - 1 where ID = N'{storeID}'";
                     List<FollowingModel> result = conn.QueryAsync<FollowingModel>(checkExist).Result.AsList();
                     if (result.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có người dùng này theo dõi" });
                     else
                     {
                         conn.Execute(querry);
-                        conn.ExecuteAsync(deleteFollower);
+                        conn.Execute(deleteFollower);
                         return Ok(new { code = 200, message = "Bỏ theo dõi thành công" });
                     }
                 }
@@ -105,23 +120,25 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet("GetStoreFollowing")]
-        public IActionResult GetStore(string userID)
+        public async Task<IActionResult> GetStoreAsync(string userID = null)
         {
-              try
+            try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkExist = $"SELECT * from AspNetUsers where Id = N'{userID}' ";
+                    string checkExist = $"SELECT * from AspNetUsers where Id = N'{user.Id}' ";
                     string querry = $"SELECT s.* from AspNetUsers u INNER JOIN [Following] f" +
-                     $" on u.Id = f.UserID INNER JOIN Store s on s.ID = f.StoreID where u.Id = N'{userID}'";
+                     $" on u.Id = f.UserID INNER JOIN Store s on s.ID = f.StoreID where u.Id = N'{user.Id}'";
                     List<UserModel> users = conn.QueryAsync<UserModel>(checkExist).Result.AsList();
-                  
+
                     if (users.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 4040, message = "Không tồn tài người dùng" });
                     else
                     {
                         List<StoreModel> stores = conn.QueryAsync<StoreModel>(querry).Result.AsList();
-                        if(stores.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tồn tài cửa hàng" });
+                        if (stores.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có cửa hàng nào đang follow" });
                         return Ok(new { code = 200, message = stores });
                     }
                 }

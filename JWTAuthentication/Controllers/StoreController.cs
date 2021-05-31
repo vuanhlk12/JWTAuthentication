@@ -24,6 +24,17 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class StoreController : ControllerBase
     {
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IConfiguration _configuration;
+
+        public StoreController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        {
+            this.userManager = userManager;
+            this.roleManager = roleManager;
+            _configuration = configuration;
+        }
+
         [HttpGet("GetStoreByUserID")]
         public IActionResult GetStoreByUserID(string UserID = null)
         {
@@ -88,7 +99,7 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetStoreByRange")]
         public IActionResult GetStoreByRange(int size, int page, int? aproveStatus = null, string searchKey = null)
         {
-            
+
             try
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
@@ -134,18 +145,20 @@ namespace JWTAuthentication.Controllers
             return returnList;
         }
 
+        [Authorize]
         [HttpPost("AddStoreByUser")]
-        public IActionResult AddStoreByUser([FromBody] StoreModel Store)
+        public async Task<IActionResult> AddStoreByUserAsync([FromBody] StoreModel Store)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkStore = $"SELECT * FROM Store WHERE OwnerID ='{Store.OwnerID}'";
+                    string checkStore = $"SELECT * FROM Store WHERE OwnerID ='{user.Id}'";
                     var store = conn.Query<StoreModel>(checkStore).FirstOrDefault();
                     if (store != null) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "User đã đăng ký cửa hàng" });
 
-                    string query = $"INSERT INTO Store (ID,Name,Detail,CreateTime,OwnerID,Approved,RatingsCount,FollowerCount,Star) VALUES (N'{Guid.NewGuid()}', N'{Store.Name}', N'{Store.Detail}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{Store.OwnerID}', 0,0,0,0); ";
+                    string query = $"INSERT INTO Store (ID,Name,Detail,CreateTime,OwnerID,Approved,RatingsCount,FollowerCount,Star) VALUES (N'{Guid.NewGuid()}', N'{Store.Name}', N'{Store.Detail}', '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', N'{user.Id}', 0,0,0,0); ";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = "Thêm cửa hàng thành công" });
                 }
@@ -156,6 +169,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpPost("ApproveStoreByAdmin")]
         public IActionResult ApproveStoreByAdmin(string StoreID)
         {
@@ -174,6 +188,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpPost("AproveStoreByAdmin")]
         public IActionResult AproveStoreByAdmin([FromBody] string StoreID)
         {
@@ -192,6 +207,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpPost("BanStoreByAdmin")]
         public IActionResult BanStoreByAdmin([FromBody] string StoreID)
         {

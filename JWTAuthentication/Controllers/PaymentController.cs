@@ -26,19 +26,32 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class PaymentController : ControllerBase
     {
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IConfiguration _configuration;
+
+        public PaymentController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        {
+            this.userManager = userManager;
+            this.roleManager = roleManager;
+            _configuration = configuration;
+        }
+
+        [Authorize]
         [HttpGet("GetMethods")]
-        public IActionResult GetAllMethod(string userID)
+        public async Task<IActionResult> GetAllMethodAsync(string userID = null)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkExist = $"SELECT * FROM AspNetUsers where Id = N'{userID}'";
-                    string query = $"SELECT * FROM Payment where UserID = '{userID}'";
+                    string checkExist = $"SELECT * FROM AspNetUsers where Id = N'{user.Id}'";
+                    string query = $"SELECT * FROM Payment where UserID = '{user.Id}'";
                     List<UserModel> users = conn.QueryAsync<UserModel>(checkExist).Result.AsList();
-                    if(users.Count == 0)
+                    if (users.Count == 0)
                     {
-                       return StatusCode(StatusCodes.Status404NotFound, new { code = 4041, message = "User không tồn tại" });
+                        return StatusCode(StatusCodes.Status404NotFound, new { code = 4041, message = "User không tồn tại" });
                     }
                     else
                     {
@@ -77,15 +90,15 @@ namespace JWTAuthentication.Controllers
                         else
                         {
                             conn.Execute(query);
-                            return Ok(new { code = 200, message =  "Thêm phương thức thanh toán thành công" });
+                            return Ok(new { code = 200, message = "Thêm phương thức thanh toán thành công" });
                         }
                     }
-                  
+
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra" , detail = e.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail = e.Message });
             }
         }
 
@@ -97,11 +110,11 @@ namespace JWTAuthentication.Controllers
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
                     string checkExist = $"SELECT * FROM Payment where ID = N'{paymentID}'";
-                  
+
                     string query = $"DELETE FROM Payment where ID = N'{paymentID}'";
-                  
+
                     List<PaymentModel> wallet = conn.QueryAsync<PaymentModel>(checkExist).Result.AsList();
-                    if(wallet.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Phương thức thanh toán không tồn tại" });
+                    if (wallet.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Phương thức thanh toán không tồn tại" });
                     else
                     {
                         conn.Execute(query);

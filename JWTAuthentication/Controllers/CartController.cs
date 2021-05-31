@@ -26,15 +26,28 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class CartController : ControllerBase
     {
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IConfiguration _configuration;
+
+        public CartController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        {
+            this.userManager = userManager;
+            this.roleManager = roleManager;
+            _configuration = configuration;
+        }
+
+        [Authorize]
         [HttpGet("CartList")]
-        public IActionResult GetBuyerCart(string buyerID)
+        public async Task<IActionResult> GetBuyerCartAsync(string buyerID = null)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity , p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}'  ";
+                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity , p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{user.Id}'  ";
 
                     var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(queryJoin, (cart, product) =>
                     {
@@ -57,14 +70,16 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize]
         [HttpDelete("DeleteAllCart")]
-        public IActionResult DeleteAllCart([FromBody] string buyerID)
+        public async Task<IActionResult> DeleteAllCartAsync([FromBody] string buyerID = null)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string deleteQuery = $"DELETE FROM Cart WHERE BuyerID ='{buyerID}'";
+                    string deleteQuery = $"DELETE FROM Cart WHERE BuyerID ='{user.Id}'";
                     conn.Execute(deleteQuery);
                     return Ok(new { code = 200, message = "Đã xóa toàn bộ giỏ hàng" });
                 }
@@ -75,15 +90,17 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet("ProductInCart")]
-        public IActionResult GetBuyerProductInCart(string buyerID, string productID)
+        public async Task<IActionResult> GetBuyerProductInCartAsync(string productID, string buyerID = null)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity, p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{buyerID}' and c.ProductID = N'{productID}'  ";
+                    string queryJoin = $"SELECT c.ID as CartID, c.AddedTime, c.Quantity, p.* FROM Cart c INNER JOIN Product p on c.ProductID = p.ID where c.BuyerID = N'{user.Id}' and c.ProductID = N'{productID}'  ";
 
                     var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(queryJoin, (cart, product) =>
                     {
@@ -105,28 +122,28 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize]
         [HttpPost("AddProductToCart")]
-
-
-        public IActionResult AddToCart(CartModel cart)
+        public async Task<IActionResult> AddToCartAsync(CartModel cart)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
 
-                    string checkExist = $"SELECT * FROM Cart where BuyerID ='{cart.BuyerID}' and ProductID = '{cart.ProductID}'";
+                    string checkExist = $"SELECT * FROM Cart where BuyerID ='{user.Id}' and ProductID = '{cart.ProductID}'";
                     List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
 
                     if (cartQuerry.Count == 0)
                     {
-                        string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime,  Quantity) VALUES(N'{Guid.NewGuid()}', N'{cart.BuyerID}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}',N'{cart.Quantity}');";
+                        string insertNewItem = $"INSERT INTO Cart(ID, BuyerID,ProductID,AddedTime,  Quantity) VALUES(N'{Guid.NewGuid()}', N'{user.Id}', N'{cart.ProductID}',N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}',N'{cart.Quantity}');";
                         conn.Execute(insertNewItem);
                         return Ok(new { code = 200, message = $"Them gio hang thành công" });
                     }
                     else
                     {
-                        string updateQuanity = $"UPDATE Cart SET Quantity = {cart.Quantity}, AddedTime = N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' WHERE BuyerID = '{cart.BuyerID}' AND ProductID = '{cart.ProductID}'";
+                        string updateQuanity = $"UPDATE Cart SET Quantity = {cart.Quantity}, AddedTime = N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' WHERE BuyerID = '{user.Id}' AND ProductID = '{cart.ProductID}'";
                         conn.Execute(updateQuanity);
                         return Ok(new { code = 200, message = $"Cap nhat gio hang thành công" });
                     }
@@ -140,15 +157,17 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize]
         [HttpDelete("DeleteFromCart")]
-        public IActionResult UserDeleteProduct(string userID, string productID)
+        public async Task<IActionResult> UserDeleteProductAsync(string productID, string userID = null)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkExist = $"SELECT * FROM Cart where BuyerID = N'{userID}' and ProductID = N'{productID}' ";
-                    string deleteItem = $"DELETE FROM Cart where BuyerID = N'{userID}' and ProductID = N'{productID}' ";
+                    string checkExist = $"SELECT * FROM Cart where BuyerID = N'{user.Id}' and ProductID = N'{productID}' ";
+                    string deleteItem = $"DELETE FROM Cart where BuyerID = N'{user.Id}' and ProductID = N'{productID}' ";
                     List<CartModel> cartQuerry = conn.Query<CartModel>(checkExist).AsList();
 
                     if (cartQuerry.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy mặt hàng trong giỏ" });
@@ -166,24 +185,24 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-
+        [Authorize]
         [HttpGet("ConfirmPayment")]
-        public IActionResult UserConfirmPayment(string userID, string AddressID)
+        public async Task<IActionResult> UserConfirmPaymentAsync(string AddressID, string userID = null)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
                     //Vũ Anh sửa lại thành lấy hết
-                    string consumePending = $"SELECT c.*, p.* FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{userID}'  ";
-                    string changeStatus = $"DELETE FROM Cart where BuyerID =  N'{userID}' ";
+                    string consumePending = $"SELECT c.*, p.* FROM Cart c INNER JOIN Product p ON c.ProductID = p.ID where c.BuyerID = N'{user.Id}'  ";
+                    string changeStatus = $"DELETE FROM Cart where BuyerID =  N'{user.Id}' ";
                     var query = conn.QueryAsync<CartModel, ProductModel, CartModel>(consumePending, (cart, product) =>
                     {
                         cart.Product = product;
                         return cart;
                     }, splitOn: "ID").Result.ToList();
 
-                    conn.Execute(changeStatus);
                     if (query.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có mặt hàng trong giỏ" });
                     else
                     {
@@ -197,7 +216,7 @@ namespace JWTAuthentication.Controllers
                             total += (int)(c.Quantity * c.Product.Price * (1 - (float)c.Product.Discount / 100));
                         }
 
-                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime,Status,AddressID) VALUES(N'{BillID}', N'{userID}', N'{listItem}', {total},N'{transactionTime}', null, 0 , N'{AddressID}')";
+                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime,Status,AddressID) VALUES(N'{BillID}', N'{user.Id}', N'{listItem}', {total},N'{transactionTime}', null, 0 , N'{AddressID}')";
                         conn.Execute(createBill);
 
                         foreach (CartModel c in query)
@@ -208,6 +227,8 @@ namespace JWTAuthentication.Controllers
                             conn.Execute(addToBillProduct);//them truong storeID de tien tra cuu
                             conn.Execute(updateProduct);//sua lai so hang ton du
                         }
+
+                        conn.Execute(changeStatus);
 
                         return Ok(new { code = 200, message = "Thanh toán giỏ hàng thành công", detail = query });
                     }

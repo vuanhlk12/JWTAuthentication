@@ -112,7 +112,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        public List<RatingModel> _GetRatingForProduct(string ProductID)
+        public static List<RatingModel> _GetRatingForProduct(string ProductID)
         {
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
             {

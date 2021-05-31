@@ -27,25 +27,33 @@ namespace JWTAuthentication.Controllers
         [HttpGet("GetUserByUserID")]
         public IActionResult GetUserByUserID(string UserID = null)
         {
-            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
-            {
+
                 try
                 {
-                    string query = $"SELECT * FROM AspNetUsers WHERE Id = '{UserID}'";
-                    UserModel user = conn.Query<UserModel>(query).AsList().FirstOrDefault();
+                    UserModel user = _GetUserByUserID(UserID);
                     return Ok(new { code = 200, data = user });
                 }
                 catch (Exception ex)
                 {
                     return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
                 }
+            
+        }
+
+        public static UserModel _GetUserByUserID(string UserID = null)
+        {
+            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+            {
+                string query = $"SELECT * FROM AspNetUsers WHERE Id = '{UserID}'";
+                UserModel user = conn.Query<UserModel>(query).AsList().FirstOrDefault();
+                return user;
             }
         }
 
         [HttpGet("GetUserByRange")]
         public IActionResult GetUserByRange(int page = 0, int size = 0)
         {
-            
+
             using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
             {
                 try

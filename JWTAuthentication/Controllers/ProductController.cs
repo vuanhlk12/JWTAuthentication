@@ -9,6 +9,9 @@ using Microsoft.Data.SqlClient;
 using Dapper;
 using Microsoft.AspNetCore.Http;
 using Nancy.Json;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 
 namespace JWTAuthentication.Controllers
 {
@@ -17,6 +20,18 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class ProductController : ControllerBase
     {
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IConfiguration _configuration;
+
+        public ProductController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        {
+            this.userManager = userManager;
+            this.roleManager = roleManager;
+            _configuration = configuration;
+        }
+
+
         [HttpGet("GetProductByCategoryID")]
         public IActionResult GetProductByCategoryID(string CategoryID = null)
         {
@@ -264,14 +279,16 @@ namespace JWTAuthentication.Controllers
         }
 
 
+        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpPost("AddProductByStore")]
-        public ActionResult AddProductByStore([FromBody] ProductModel Product)
+        public async System.Threading.Tasks.Task<ActionResult> AddProductByStoreAsync([FromBody] ProductModel Product)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkValidStore = $"SELECT * FROM Store WHERE ID= '{Product.StoreID}'";
+                    string checkValidStore = $"SELECT * FROM Store WHERE OwnerID= '{user.Id}'";
                     var store = conn.Query<StoreModel>(checkValidStore).FirstOrDefault();
                     if (store.Approved != 1) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Cửa hàng đang bị khóa hoặc chưa được chấp nhận" });
 
@@ -293,20 +310,22 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpPost("UpdateProductByStore")]
-        public ActionResult UpdateProductByStore([FromBody] ProductModel Product)
+        public async System.Threading.Tasks.Task<ActionResult> UpdateProductByStoreAsync([FromBody] ProductModel Product)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkValidStore = $"SELECT * FROM Store WHERE ID= '{Product.StoreID}'";
+                    string checkValidStore = $"SELECT * FROM Store WHERE OwnerID= '{user.Id}'";
                     var store = conn.Query<StoreModel>(checkValidStore).FirstOrDefault();
                     if (store.Approved != 1) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Cửa hàng đang bị khóa hoặc chưa được chấp nhận" });
 
-                    string productQuery = $"SELECT * FROM Product WHERE ID='{Product.ID}'";
+                    string productQuery = $"SELECT * FROM Product WHERE ID='{Product.ID}' AND StoreID ='{store.ID}'";
                     var oldProduct = conn.Query<ProductModel>(productQuery).FirstOrDefault();
-                    if (oldProduct == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy sản phẩm" });
+                    if (oldProduct == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy sản phẩm hoặc cửa hàng không có quyền sửa sản phẩm này" });
 
                     Product.Name = Product.Name.Replace("'", "''");
                     Product.Color = Product.Color.Replace("'", "''");
@@ -326,19 +345,26 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpPost("DeleteProductByStore")]
-        public ActionResult DeleteProductByStore([FromBody] string ProductID)
+        public async System.Threading.Tasks.Task<ActionResult> DeleteProductByStoreAsync([FromBody] string ProductID)
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
+
                     string getProduct = $"SELECT * FROM Product WHERE ID= '{ProductID}'";
                     var product = conn.Query<ProductModel>(getProduct).FirstOrDefault();
 
-                    string checkValidStore = $"SELECT * FROM Store WHERE ID= '{product.StoreID}'";
+                    string checkValidStore = $"SELECT * FROM Store WHERE OwnerID= '{user.Id}'";
                     var store = conn.Query<StoreModel>(checkValidStore).FirstOrDefault();
                     if (store.Approved != 1) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Cửa hàng đang bị khóa hoặc chưa được chấp nhận" });
+
+                    string productQuery = $"SELECT * FROM Product WHERE ID='{ProductID}' AND StoreID ='{store.ID}'";
+                    var oldProduct = conn.Query<ProductModel>(productQuery).FirstOrDefault();
+                    if (oldProduct == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy sản phẩm hoặc cửa hàng không có quyền xóa sản phẩm này" });
 
                     string query = $"DELETE FROM Product WHERE ID='{ProductID}'";
                     conn.Execute(query);

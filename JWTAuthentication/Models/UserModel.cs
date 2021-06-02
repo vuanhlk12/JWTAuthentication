@@ -8,7 +8,18 @@ namespace JWTAuthentication.Authentication
         public string ID { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
-        public string PhoneNumber { get; set; }
+        private string phoneNumber { get; set; }
+        public string PhoneNumber
+        {
+            get
+            {
+                return phoneNumber ?? "";
+            }
+            set
+            {
+                phoneNumber = value;
+            }
+        }
         public string Gender { get; set; }
         public string ProfilePhoto { get; set; }
         public string FirstName { get; set; }

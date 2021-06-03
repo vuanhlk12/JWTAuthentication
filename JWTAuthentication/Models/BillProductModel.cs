@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Dapper;
+using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -27,7 +29,10 @@ namespace JWTAuthentication.Authentication
                 return Products.Sum(item => (int)(item.Quanlity * item.Price * (1 - (float)item.Discount / 100)));
             }
         }
+        public string PaymentID { get; set; }
+        
         public List<ProductModel> Products { get; set; }
+
 
     }
 }

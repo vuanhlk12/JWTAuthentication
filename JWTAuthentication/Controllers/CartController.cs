@@ -187,7 +187,7 @@ namespace JWTAuthentication.Controllers
 
         [Authorize]
         [HttpGet("ConfirmPayment")]
-        public async Task<IActionResult> UserConfirmPaymentAsync(string AddressID, string userID = null)
+        public async Task<IActionResult> UserConfirmPaymentAsync(string AddressID, string PaymentID, string userID = null)
         {
             try
             {
@@ -216,7 +216,14 @@ namespace JWTAuthentication.Controllers
                             total += (int)(c.Quantity * c.Product.Price * (1 - (float)c.Product.Discount / 100));
                         }
 
-                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime,Status,AddressID) VALUES(N'{BillID}', N'{user.Id}', N'{listItem}', {total},N'{transactionTime}', null, 0 , N'{AddressID}')";
+                        if (PaymentID != "88888888-8888-8888-8888-888888888888")
+                        {
+                            string checkPayment = $"SELECT * FROM Payment WHERE UserID ='{user.Id}'";
+                            List<PaymentModel> payments = conn.Query<PaymentModel>(checkPayment).Where(p => p.ID == PaymentID).AsList();
+                            if (payments.Count() == 0) return StatusCode(StatusCodes.Status402PaymentRequired, new { code = 402, message = "Người dùng không có phương thức thanh toán này" });
+                        }
+
+                        string createBill = $"INSERT INTO Bill(ID,BuyerID,ListItem,Total,OrderTime,ShipTime,Status,AddressID,PaymentID) VALUES(N'{BillID}', N'{user.Id}', N'{listItem}', {total},N'{transactionTime}', null, 0 , N'{AddressID}', N'{PaymentID}')";
                         conn.Execute(createBill);
 
                         foreach (CartModel c in query)

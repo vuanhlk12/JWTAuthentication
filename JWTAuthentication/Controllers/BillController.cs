@@ -92,12 +92,25 @@ namespace JWTAuthentication.Controllers
                     List<ColumnGraph> graph = conn.Query<ColumnGraph>(query).AsList();
                     if (fromDate != null) graph = graph.Where(p => p.date >= fromDate).AsList();
                     if (toDate != null) graph = graph.Where(p => p.date <= toDate).AsList();
-                    return Ok(new { code = 200, data = graph });
+
+                    dynamic result = from grap in graph
+                                     select new
+                                     {
+                                         date = ((DateTime)grap.date).ToString("yyyy-MM-dd"),
+                                         value = grap.value
+                                     };
+
+                    return Ok(new { code = 200, data = result });
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail = e.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    code = 500,
+                    message = "Có lỗi đã xẩy ra",
+                    detail = e.Message
+                });
             }
 
         }

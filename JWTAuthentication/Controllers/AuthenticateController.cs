@@ -262,13 +262,13 @@ namespace JWTAuthentication.Controllers
 
             ApplicationUser user = new ApplicationUser()
             {
-                Email = model.Email,
+                Email = model.Email ?? "",
                 SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.Account,
-                Gender = model.Gender,
-                PhoneNumber = model.PhoneNumber,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
+                UserName = model.Account ?? "",
+                Gender = model.Gender ?? "O",
+                PhoneNumber = model.PhoneNumber ?? "",
+                FirstName = model.FirstName ?? "",
+                LastName = model.LastName ?? "",
                 DateOfBirth = model.DateOfBirth
             };
             var result = await userManager.CreateAsync(user, model.Password);
@@ -295,13 +295,13 @@ namespace JWTAuthentication.Controllers
 
             ApplicationUser user = new ApplicationUser()
             {
-                Email = model.Email,
+                Email = model.Email ?? "",
                 SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.Account,
-                Gender = model.Gender,
-                PhoneNumber = model.PhoneNumber,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
+                UserName = model.Account ?? "",
+                Gender = model.Gender ?? "O",
+                PhoneNumber = model.PhoneNumber ?? "",
+                FirstName = model.FirstName ?? "",
+                LastName = model.LastName ?? "",
                 DateOfBirth = model.DateOfBirth
             };
             var result = await userManager.CreateAsync(user, model.Password);

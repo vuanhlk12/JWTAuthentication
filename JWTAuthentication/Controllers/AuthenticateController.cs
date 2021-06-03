@@ -117,12 +117,12 @@ namespace JWTAuthentication.Controllers
             if (user == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User not found" });
 
             //update
-            user.Email = model.Email;
-            user.FirstName = model.FirstName;
-            user.LastName = model.LastName;
-            user.Gender = model.Gender;
+            user.Email = model.Email ?? "";
+            user.FirstName = model.FirstName ?? "";
+            user.LastName = model.LastName ?? "";
+            user.Gender = model.Gender ?? "O";
             user.DateOfBirth = model.DateOfBirth;
-            user.PhoneNumber = model.PhoneNumber;
+            user.PhoneNumber = model.PhoneNumber ?? "";
 
             string message;
             var UpdateResult = await userManager.UpdateAsync(user);
@@ -229,13 +229,13 @@ namespace JWTAuthentication.Controllers
 
             ApplicationUser user = new ApplicationUser()
             {
-                Email = model.Email,
+                Email = model.Email ?? "",
                 SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.Account,
-                Gender = model.Gender,
-                PhoneNumber = model.PhoneNumber,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
+                UserName = model.Account ?? "",
+                Gender = model.Gender ?? "O",
+                PhoneNumber = model.PhoneNumber ?? "",
+                FirstName = model.FirstName ?? "",
+                LastName = model.LastName ?? "",
                 DateOfBirth = model.DateOfBirth
 
             };

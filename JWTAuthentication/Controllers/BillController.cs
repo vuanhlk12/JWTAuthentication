@@ -117,7 +117,6 @@ namespace JWTAuthentication.Controllers
 
                     string query = $@"SELECT
 	                                    p.CategoryID ,
-	                                    CAST(b.OrderTime AS DATE) as date,
 	                                    SUM(b.Total) as value
                                     FROM
 	                                    Bill b
@@ -125,13 +124,14 @@ namespace JWTAuthentication.Controllers
 	                                    b.ID = bp.BillID
                                     INNER join Product p on
 	                                    bp.ProductID = p.ID
-                                    {(userRoles.Contains(UserRoles.Admin) ? "" : @$"WHERE bp.StoreID = '{store.ID}'")}
+                                    WHERE
+	                                    1 = 1
+                                        {(userRoles.Contains(UserRoles.Admin) ? "" : $"AND bp.StoreID = '{store.ID}'")}
+	                                    {(fromDate != null ? $"AND b.OrderTime >= Convert(datetime, '{((DateTime)fromDate).ToString("yyyy-MM-dd")}' )" : "")}
+	                                    {(toDate != null ? $"AND b.OrderTime <= Convert(datetime, '{((DateTime)toDate).ToString("yyyy-MM-dd")}' )" : "")}
                                     GROUP BY
-	                                p.CategoryID,
-	                                CAST(b.OrderTime AS DATE)";
+	                                    p.CategoryID";
                     List<DonutGraph> graph = conn.Query<DonutGraph>(query).AsList();
-                    if (fromDate != null) graph = graph.Where(p => p.date >= fromDate).AsList();
-                    if (toDate != null) graph = graph.Where(p => p.date <= toDate).AsList();
 
                     double sum = graph.Sum(p => p.value);
 

@@ -24,7 +24,6 @@ namespace JWTAuthentication.Authentication
                 return getCategory();
             }
         }
-        public DateTime? date { get; set; }
         public double value { get; set; }
         public CategoryModel getCategory()
         {

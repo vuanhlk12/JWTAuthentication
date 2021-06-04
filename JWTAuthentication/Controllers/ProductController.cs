@@ -310,7 +310,7 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
+        [Authorize(Roles = UserRoles.Seller)]
         [HttpPost("UpdateProductByStore")]
         public async System.Threading.Tasks.Task<ActionResult> UpdateProductByStoreAsync([FromBody] ProductModel Product)
         {
@@ -326,6 +326,37 @@ namespace JWTAuthentication.Controllers
                     string productQuery = $"SELECT * FROM Product WHERE ID='{Product.ID}' AND StoreID ='{store.ID}'";
                     var oldProduct = conn.Query<ProductModel>(productQuery).FirstOrDefault();
                     if (oldProduct == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy sản phẩm hoặc cửa hàng không có quyền sửa sản phẩm này" });
+
+                    Product.Name = Product.Name.Replace("'", "''");
+                    Product.Color = Product.Color.Replace("'", "''");
+                    Product.Size = Product.Size.Replace("'", "''");
+                    Product.Image = Product.Image.Replace("'", "''");
+                    Product.Description = Product.Description.Replace("'", "''");
+                    Product.Detail = Product.Detail.Replace("'", "''");
+
+                    string query = $"UPDATE Product SET Name=N'{(string.IsNullOrEmpty(Product.Name) ? oldProduct.Name : Product.Name)}', Price={(Product.Price ?? oldProduct.Price)}, Color=N'{(string.IsNullOrEmpty(Product.Color) ? oldProduct.Color : Product.Color)}', [Size]=N'{(string.IsNullOrEmpty(Product.Size) ? oldProduct.Size : Product.Size)}', Detail=N'{(string.IsNullOrEmpty(Product.Detail) ? oldProduct.Detail : Product.Detail)}', Description=N'{(string.IsNullOrEmpty(Product.Description) ? oldProduct.Description : Product.Description)}', CategoryID=N'{(string.IsNullOrEmpty(Product.CategoryID) ? oldProduct.CategoryID : Product.CategoryID)}', Discount={(Product.Discount ?? oldProduct.Discount)}, Quanlity={(Product.Quanlity ?? oldProduct.Quanlity)}, [Image]=N'{(string.IsNullOrEmpty(Product.Image) ? oldProduct.Image : Product.Image)}', LastModify='{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' WHERE ID='{Product.ID}'";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = $"Sửa sản phẩm {Product.Name} thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
+        [Authorize(Roles = UserRoles.Admin )]
+        [HttpPost("UpdateProductByAdmin")]
+        public async System.Threading.Tasks.Task<ActionResult> UpdateProductByAdmin([FromBody] ProductModel Product)
+        {
+            try
+            {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string productQuery = $"SELECT * FROM Product WHERE ID='{Product.ID}'";
+                    var oldProduct = conn.Query<ProductModel>(productQuery).FirstOrDefault();
+                    if (oldProduct == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy sản phẩm" });
 
                     Product.Name = Product.Name.Replace("'", "''");
                     Product.Color = Product.Color.Replace("'", "''");

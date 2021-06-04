@@ -257,7 +257,8 @@ namespace JWTAuthentication.Controllers
 
             if (user == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User not found" });
 
-            var result = await userManager.ChangePasswordAsync(user, model.Password, model.NewPassword);
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await userManager.ResetPasswordAsync(user, token, model.NewPassword);
             if (result.Succeeded)
             {
                 return Ok(new { code = 200, message = $"Tài khoản {UserName} đã thay đổi mật khẩu thành công" });

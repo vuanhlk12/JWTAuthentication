@@ -115,6 +115,50 @@ namespace JWTAuthentication.Controllers
 
         }
 
+        [Authorize(Roles = UserRoles.Admin)]
+        [HttpGet("GetTransactionsStoreColumnGraphAdmin")]
+        public IActionResult GetTransactionsStoreColumnGraphAdmin(string StoreID, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $@"SELECT
+	                                    CAST(b.OrderTime AS DATE) as date,
+	                                    SUM(b.Total) as value
+                                    FROM
+	                                    Bill b
+                                    inner join BillProduct bp on
+	                                    b.ID = bp.BillID
+                                    WHERE bp.StoreID = '{StoreID}'
+                                    GROUP BY
+	                                    CAST(b.OrderTime AS DATE)";
+                    List<ColumnGraph> graph = conn.Query<ColumnGraph>(query).AsList();
+                    if (fromDate != null) graph = graph.Where(p => p.date >= fromDate).AsList();
+                    if (toDate != null) graph = graph.Where(p => p.date <= toDate).AsList();
+
+                    dynamic result = from grap in graph
+                                     select new
+                                     {
+                                         date = ((DateTime)grap.date).ToString("yyyy-MM-dd"),
+                                         value = grap.value
+                                     };
+
+                    return Ok(new { code = 200, data = result });
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    code = 500,
+                    message = "Có lỗi đã xẩy ra",
+                    detail = e.Message
+                });
+            }
+
+        }
+
         [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpGet("GetTransactionsStoreDonutGraph")]
         public async Task<IActionResult> GetTransactionsStoreDonutGraph(DateTime? fromDate = null, DateTime? toDate = null)
@@ -169,8 +213,59 @@ namespace JWTAuthentication.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail = e.Message });
             }
-
         }
+
+        [Authorize(Roles = UserRoles.Admin)]
+        [HttpGet("GetTransactionsStoreDonutGraphAdmin")]
+        public IActionResult GetTransactionsStoreDonutGraphAdmin(string StoreID, DateTime? fromDate = null, DateTime? toDate = null)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $@"SELECT
+	                                    p.CategoryID ,
+	                                    SUM(b.Total) as value
+                                    FROM
+	                                    Bill b
+                                    inner join BillProduct bp on
+	                                    b.ID = bp.BillID
+                                    INNER join Product p on
+	                                    bp.ProductID = p.ID
+                                    WHERE
+	                                    1 = 1
+                                        AND bp.StoreID = '{StoreID}'
+	                                    {(fromDate != null ? $"AND b.OrderTime >= Convert(datetime, '{((DateTime)fromDate).ToString("yyyy-MM-dd")}' )" : "")}
+	                                    {(toDate != null ? $"AND b.OrderTime <= Convert(datetime, '{((DateTime)toDate).ToString("yyyy-MM-dd")}' )" : "")}
+                                    GROUP BY
+	                                    p.CategoryID";
+                    List<DonutGraph> graph = conn.Query<DonutGraph>(query).AsList();
+
+                    double sum = graph.Sum(p => p.value);
+
+                    List<DonutResult> results = (from grap in graph
+                                                 select new DonutResult
+                                                 {
+                                                     Name = grap.Category.Name,
+                                                     Value = (int)(grap.value / sum * 100)
+                                                 }).ToList();
+
+                    int sumPercent = 0;
+                    for (int i = 0; i < results.Count - 1; i++)
+                    {
+                        sumPercent += results[i].Value;
+                    }
+                    results[results.Count - 1].Value = 100 - sumPercent;
+
+                    return Ok(new { code = 200, data = new { series = results.Select(p => p.Name), labels = results.Select(p => p.Value) } });
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail = e.Message });
+            }
+        }
+
 
         //Vũ Anh thêm get trans cho store
         [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]

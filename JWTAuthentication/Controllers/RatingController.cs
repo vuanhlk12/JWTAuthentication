@@ -93,6 +93,7 @@ namespace JWTAuthentication.Controllers
             try
             {
                 var ratings = _GetRatingForProduct(ProductID);
+                if (ratings.Count == 0) return StatusCode(StatusCodes.Status400BadRequest, new { code = 400, message = "Sản phẩm này chưa có rating" });
                 float starSum = 0;
                 foreach (var rating in ratings)
                 {
@@ -106,9 +107,9 @@ namespace JWTAuthentication.Controllers
                     message = ratings
                 });
             }
-            catch
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra" });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
             }
         }
 

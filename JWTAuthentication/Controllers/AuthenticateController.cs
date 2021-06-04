@@ -248,6 +248,27 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpPost]
+        [Route("ChangePasswordByToken")]
+        public async Task<IActionResult> ChangePasswordByToken([FromBody] ChangeInfoModel model)
+        {
+            var UserName = model.Account;
+            var user = await userManager.FindByNameAsync(UserName);
+
+            if (user == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User not found" });
+
+            var result = await userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+            if (result.Succeeded)
+            {
+                return Ok(new { code = 200, message = $"Tài khoản {UserName} đã thay đổi mật khẩu thành công" });
+            }
+            else
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"Đã có lỗi: {result.Errors.First().Description}" });
+            }
+
+        }
+
+        [HttpPost]
         [Route("ChangePasswordAdmin")]
         [Authorize(Roles = UserRoles.Admin)]
         public async Task<IActionResult> ChangePasswordAdmin([FromBody] ChangeInfoModel model)

@@ -153,6 +153,78 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [HttpDelete]
+        [Route("DeleteUserAdmin")]
+        [Authorize(Roles = UserRoles.Admin)]
+        public async Task<IActionResult> DeleteUserAdmin([FromBody] string account)
+        {
+            var user = await userManager.FindByNameAsync(account);
+
+            if (user == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User not found" });
+
+            var DeleteResult = await userManager.DeleteAsync(user);
+            if (DeleteResult.Succeeded)
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"UPDATE Store SET Approved=2 WHERE OwnerID ='{user.Id}'";
+                    conn.Execute(query);
+                }
+                return Ok(new { code = 200, message = $"Tài khoản {account} đã bị xóa, cửa hàng của tài khoản này đã bị cấm nếu có." });
+            }
+            else
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"Đã có lỗi: {DeleteResult.Errors.First().Description}" });
+            }
+        }
+
+        [HttpPost]
+        [Route("ChangeInfoAdmin")]
+        [Authorize(Roles = UserRoles.Admin)]
+        public async Task<IActionResult> ChangeInfoAdmin([FromBody] ChangeInfoModel model)
+        {
+            var UserName = model.Account;
+            var user = await userManager.FindByNameAsync(UserName);
+
+            if (user == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User not found" });
+
+            //update
+            user.Email = model.Email ?? "";
+            user.FirstName = model.FirstName ?? "";
+            user.LastName = model.LastName ?? "";
+            user.Gender = model.Gender ?? "O";
+            user.DateOfBirth = model.DateOfBirth;
+            user.PhoneNumber = model.PhoneNumber ?? "";
+
+            string message;
+            var UpdateResult = await userManager.UpdateAsync(user);
+            if (UpdateResult.Succeeded)
+            {
+                message = $"Thay đổi thông tin tài khoản {UserName} thành công";
+            }
+            else
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"Đã có lỗi: {UpdateResult.Errors.First().Description}" });
+            }
+
+            if (model.ChangePassword)
+            {
+                var result = await userManager.ChangePasswordAsync(user, model.Password, model.NewPassword);
+                if (result.Succeeded)
+                {
+                    return Ok(new { code = 200, message = $"{message}, Tài khoản {UserName} đã thay đổi mật khẩu thành công" });
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"{message}, Đã có lỗi: {result.Errors.First().Description}" });
+                }
+            }
+            else
+            {
+                return Ok(new { code = 200, message = message });
+            }
+        }
+
         [HttpPost]
         [Route("ChangePassword")]
         [Authorize]
@@ -160,6 +232,28 @@ namespace JWTAuthentication.Controllers
         {
             var UserName = User.Identity.Name;
             var user = await userManager.FindByNameAsync(User.Identity.Name);
+
+            if (user == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User not found" });
+
+            var result = await userManager.ChangePasswordAsync(user, model.Password, model.NewPassword);
+            if (result.Succeeded)
+            {
+                return Ok(new { code = 200, message = $"Tài khoản {UserName} đã thay đổi mật khẩu thành công" });
+            }
+            else
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"Đã có lỗi: {result.Errors.First().Description}" });
+            }
+
+        }
+
+        [HttpPost]
+        [Route("ChangePasswordAdmin")]
+        [Authorize(Roles = UserRoles.Admin)]
+        public async Task<IActionResult> ChangePasswordAdmin([FromBody] ChangeInfoModel model)
+        {
+            var UserName = model.Account;
+            var user = await userManager.FindByNameAsync(UserName);
 
             if (user == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User not found" });
 
@@ -254,6 +348,7 @@ namespace JWTAuthentication.Controllers
 
         [HttpPost]
         [Route("register-admin")]
+        [Authorize(Roles = UserRoles.Admin)]
         public async Task<IActionResult> RegisterAdmin([FromBody] RegisterModel model)
         {
             var userExists = await userManager.FindByNameAsync(model.Account);
@@ -285,38 +380,7 @@ namespace JWTAuthentication.Controllers
             return Ok(new { code = 200, message = "Tạo admin thành công" });
         }
 
-        [HttpPost]
-        [Route("register-manager")]
-        public async Task<IActionResult> RegisterManager([FromBody] RegisterModel model)
-        {
-            var userExists = await userManager.FindByNameAsync(model.Account);
-            if (userExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists!" });
 
-            ApplicationUser user = new ApplicationUser()
-            {
-                Email = model.Email ?? "",
-                SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = model.Account ?? "",
-                Gender = model.Gender ?? "O",
-                PhoneNumber = model.PhoneNumber ?? "",
-                FirstName = model.FirstName ?? "",
-                LastName = model.LastName ?? "",
-                DateOfBirth = model.DateOfBirth
-            };
-            var result = await userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
-
-            await CreateRoleIfNotExist();
-
-            if (await roleManager.RoleExistsAsync(UserRoles.Manager))
-            {
-                await userManager.AddToRoleAsync(user, UserRoles.Manager);
-            }
-
-            return Ok(new Response { Status = "Success", Message = "Manager created successfully!" });
-        }
 
         [Authorize(Roles = UserRoles.Admin)]
         [HttpPost("admin/GrantSellerPermisson")]
@@ -356,8 +420,6 @@ namespace JWTAuthentication.Controllers
         {
             if (!await roleManager.RoleExistsAsync(UserRoles.Admin))
                 await roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
-            if (!await roleManager.RoleExistsAsync(UserRoles.Manager))
-                await roleManager.CreateAsync(new IdentityRole(UserRoles.Manager));
             if (!await roleManager.RoleExistsAsync(UserRoles.User))
                 await roleManager.CreateAsync(new IdentityRole(UserRoles.User));
             if (!await roleManager.RoleExistsAsync(UserRoles.Seller))

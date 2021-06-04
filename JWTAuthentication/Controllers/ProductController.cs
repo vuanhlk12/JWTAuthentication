@@ -12,6 +12,7 @@ using Nancy.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
 
 namespace JWTAuthentication.Controllers
 {
@@ -281,7 +282,7 @@ namespace JWTAuthentication.Controllers
 
         [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpPost("AddProductByStore")]
-        public async System.Threading.Tasks.Task<ActionResult> AddProductByStoreAsync([FromBody] ProductModel Product)
+        public async Task<ActionResult> AddProductByStoreAsync([FromBody] ProductModel Product)
         {
             try
             {
@@ -312,7 +313,7 @@ namespace JWTAuthentication.Controllers
 
         [Authorize(Roles = UserRoles.Seller)]
         [HttpPost("UpdateProductByStore")]
-        public async System.Threading.Tasks.Task<ActionResult> UpdateProductByStoreAsync([FromBody] ProductModel Product)
+        public async Task<ActionResult> UpdateProductByStoreAsync([FromBody] ProductModel Product)
         {
             try
             {
@@ -347,7 +348,7 @@ namespace JWTAuthentication.Controllers
 
         [Authorize(Roles = UserRoles.Admin )]
         [HttpPost("UpdateProductByAdmin")]
-        public async System.Threading.Tasks.Task<ActionResult> UpdateProductByAdmin([FromBody] ProductModel Product)
+        public async Task<ActionResult> UpdateProductByAdmin([FromBody] ProductModel Product)
         {
             try
             {
@@ -376,9 +377,9 @@ namespace JWTAuthentication.Controllers
             }
         }
 
-        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
+        [Authorize(Roles = UserRoles.Seller)]
         [HttpPost("DeleteProductByStore")]
-        public async System.Threading.Tasks.Task<ActionResult> DeleteProductByStoreAsync([FromBody] string ProductID)
+        public async Task<ActionResult> DeleteProductByStoreAsync([FromBody] string ProductID)
         {
             try
             {
@@ -396,6 +397,29 @@ namespace JWTAuthentication.Controllers
                     string productQuery = $"SELECT * FROM Product WHERE ID='{ProductID}' AND StoreID ='{store.ID}'";
                     var oldProduct = conn.Query<ProductModel>(productQuery).FirstOrDefault();
                     if (oldProduct == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy sản phẩm hoặc cửa hàng không có quyền xóa sản phẩm này" });
+
+                    string query = $"DELETE FROM Product WHERE ID='{ProductID}'";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = $"Xóa thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
+        [Authorize(Roles = UserRoles.Admin)]
+        [HttpPost("DeleteProductByAdmin")]
+        public IActionResult DeleteProductByAdmin([FromBody] string ProductID)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string productQuery = $"SELECT * FROM Product WHERE ID='{ProductID}'";
+                    var oldProduct = conn.Query<ProductModel>(productQuery).FirstOrDefault();
+                    if (oldProduct == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy sản phẩm" });
 
                     string query = $"DELETE FROM Product WHERE ID='{ProductID}'";
                     conn.Execute(query);

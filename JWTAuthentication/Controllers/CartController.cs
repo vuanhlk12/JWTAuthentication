@@ -208,7 +208,7 @@ namespace JWTAuthentication.Controllers
                     {
                         Guid BillID = Guid.NewGuid();
                         string transactionTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                        string listItem = JsonConvert.SerializeObject(query);
+                        string listItem = JsonConvert.SerializeObject(query).Replace("'", "''");
                         int total = 0;
 
                         foreach (CartModel c in query)//Vũ Anh sửa, thêm khóa ngoại nên cần insert Bill trước

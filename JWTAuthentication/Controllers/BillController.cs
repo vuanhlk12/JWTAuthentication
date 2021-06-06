@@ -89,16 +89,31 @@ namespace JWTAuthentication.Controllers
                                     {(userRoles.Contains(UserRoles.Admin) ? "" : @$"WHERE bp.StoreID = '{store.ID}'")}
                                     GROUP BY
 	                                    CAST(b.OrderTime AS DATE)";
-                    List<ColumnGraph> graph = conn.Query<ColumnGraph>(query).AsList();
+                    List<ColumnGraph> graph = conn.Query<ColumnGraph>(query).OrderBy(p => p.date).AsList();
                     if (fromDate != null) graph = graph.Where(p => p.date >= fromDate).AsList();
                     if (toDate != null) graph = graph.Where(p => p.date <= toDate).AsList();
 
-                    dynamic result = from grap in graph
-                                     select new
-                                     {
-                                         date = ((DateTime)grap.date).ToString("yyyy-MM-dd"),
-                                         value = grap.value
-                                     };
+                    var minDate = fromDate ?? (DateTime)graph[0].date;
+                    var maxDate = toDate ?? (DateTime)graph[graph.Count() - 1].date;
+                    for (DateTime i = minDate; i < maxDate; i = i.AddDays(1))
+                    {
+                        var checkNull = graph.Where(p => ((DateTime)p.date) == i).FirstOrDefault();
+                        if (checkNull == null)
+                        {
+                            graph.Add(new ColumnGraph
+                            {
+                                date = i,
+                                value = 0
+                            });
+                        }
+                    }
+
+                    dynamic result = (from grap in graph
+                                      select new
+                                      {
+                                          date = ((DateTime)grap.date).ToString("yyyy-MM-dd"),
+                                          value = grap.value
+                                      }).OrderBy(p => p.date);
 
                     return Ok(new { code = 200, data = result });
                 }
@@ -133,16 +148,31 @@ namespace JWTAuthentication.Controllers
                                     WHERE bp.StoreID = '{StoreID}'
                                     GROUP BY
 	                                    CAST(b.OrderTime AS DATE)";
-                    List<ColumnGraph> graph = conn.Query<ColumnGraph>(query).AsList();
+                    List<ColumnGraph> graph = conn.Query<ColumnGraph>(query).OrderBy(p => p.date).AsList();
                     if (fromDate != null) graph = graph.Where(p => p.date >= fromDate).AsList();
                     if (toDate != null) graph = graph.Where(p => p.date <= toDate).AsList();
 
-                    dynamic result = from grap in graph
-                                     select new
-                                     {
-                                         date = ((DateTime)grap.date).ToString("yyyy-MM-dd"),
-                                         value = grap.value
-                                     };
+                    var minDate = fromDate ?? (DateTime)graph[0].date;
+                    var maxDate = toDate ?? (DateTime)graph[graph.Count() - 1].date;
+                    for (DateTime i = minDate; i < maxDate; i = i.AddDays(1))
+                    {
+                        var checkNull = graph.Where(p => ((DateTime)p.date) == i).FirstOrDefault();
+                        if (checkNull == null)
+                        {
+                            graph.Add(new ColumnGraph
+                            {
+                                date = i,
+                                value = 0
+                            });
+                        }
+                    }
+
+                    dynamic result = (from grap in graph
+                                      select new
+                                      {
+                                          date = ((DateTime)grap.date).ToString("yyyy-MM-dd"),
+                                          value = grap.value
+                                      }).OrderBy(p => p.date);
 
                     return Ok(new { code = 200, data = result });
                 }

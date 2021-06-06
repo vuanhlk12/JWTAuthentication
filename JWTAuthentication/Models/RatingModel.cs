@@ -1,6 +1,9 @@
-﻿using JWTAuthentication.Controllers;
+﻿using Dapper;
+using JWTAuthentication.Controllers;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace JWTAuthentication.Authentication
 {
@@ -14,11 +17,28 @@ namespace JWTAuthentication.Authentication
         public string ProductID { get; set; }
         public string UserID { get; set; }
         public int Like { get; set; }
+        public bool Liked { get; set; }
         public UserModel User
         {
             get
             {
                 return UserController._GetUserByUserID(UserID);
+            }
+        }
+        public bool checkLiked(string UserID)
+        {
+            using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+            {
+                try
+                {
+                    string checkUseful = $"SELECT * FROM UsefulRating WHERE UserID ='{UserID}' AND RatingID='{ID}'";
+                    var togleLike = conn.Query<RatingModel>(checkUseful).FirstOrDefault();
+                    return (togleLike != null);
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
             }
         }
 

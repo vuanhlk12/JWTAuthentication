@@ -88,16 +88,21 @@ namespace JWTAuthentication.Controllers
         }
 
         [HttpGet("GetRatingForProduct")]
-        public IActionResult GetRatingForProduct(string ProductID)
+        public async Task<IActionResult> GetRatingForProductAsync(string ProductID)
         {
             try
             {
+                dynamic user = null;
+                var userName = User.Identity.Name;
+                if (userName != null) user = await userManager.FindByNameAsync(userName);
+
                 var ratings = _GetRatingForProduct(ProductID);
                 if (ratings.Count == 0) return StatusCode(StatusCodes.Status400BadRequest, new { code = 400, message = "Sản phẩm này chưa có rating" });
                 float starSum = 0;
                 foreach (var rating in ratings)
                 {
                     starSum += rating.Star;
+                    if (user != null) rating.Liked = rating.checkLiked(user.Id);
                 }
 
                 return Ok(new

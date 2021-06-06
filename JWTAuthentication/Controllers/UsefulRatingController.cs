@@ -56,12 +56,20 @@ namespace JWTAuthentication.Controllers
                     {
                         LikeQuery = $"INSERT INTO UsefulRating (ID, UserID, RatingID) VALUES('{Guid.NewGuid()}', '{user.Id}', '{rating.ID}')";
                         conn.Execute(LikeQuery);
+
+                        string updateLike = $"UPDATE Rating SET [Like]={++rating.Like} WHERE ID='{rating.ID}'";
+                        conn.Execute(updateLike);
+
                         return Ok(new { code = 200, message = "Like thành công" });
                     }
                     else
                     {
                         LikeQuery = $"DELETE FROM UsefulRating WHERE UserID='{user.Id}' AND RatingID='{rating.ID}'";
                         conn.Execute(LikeQuery);
+
+                        string updateLike = $"UPDATE Rating SET [Like]={--rating.Like} WHERE ID='{rating.ID}'";
+                        conn.Execute(updateLike);
+
                         return Ok(new { code = 200, message = "Disike thành công" });
                     }
                 }

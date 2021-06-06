@@ -13,6 +13,7 @@ namespace JWTAuthentication.Authentication
         public DateTime Time { get; set; }
         public string ProductID { get; set; }
         public string UserID { get; set; }
+        public int Like { get; set; }
         public UserModel User
         {
             get

@@ -38,7 +38,7 @@ namespace JWTAuthentication.Controllers
         }
 
         [Authorize]
-        [HttpGet("AddRatingByUser")]
+        [HttpPost("AddRatingByUser")]
         public async Task<IActionResult> AddRatingByUserAsync(RatingModel rating)
         {
             try

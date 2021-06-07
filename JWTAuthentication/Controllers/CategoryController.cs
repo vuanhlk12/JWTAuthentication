@@ -161,13 +161,23 @@ namespace JWTAuthentication.Controllers
             {
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string check = $"SELECT * FROM Category WHERE id='{category.ParentID}'";
-                    var checkParent = conn.Query<CategoryModel>(check).FirstOrDefault();
-                    if (checkParent == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tồn tại parentID này" });
+                    if (category.ParentID != null)
+                    {
+                        string check = $"SELECT * FROM Category WHERE id='{category.ParentID}'";
+                        var checkParent = conn.Query<CategoryModel>(check).FirstOrDefault();
+                        if (checkParent == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tồn tại parentID này" });
 
-                    string query = $"INSERT INTO Category (ID, ParentID, Name, Priority, Image) VALUES('{Guid.NewGuid()}', '{category.ParentID}', N'{category.Name}', 0, N'{category.Image}')";
-                    conn.Execute(query);
-                    return Ok(new { code = 200, message = $"Đã thêm category '{category.Name}' vào category '{checkParent.Name}'" });
+                        string query = $"INSERT INTO Category (ID, ParentID, Name, Priority, Image) VALUES('{Guid.NewGuid()}', '{category.ParentID}', N'{category.Name}', 0, N'{category.Image}')";
+
+                        conn.Execute(query);
+                        return Ok(new { code = 200, message = $"Đã thêm category '{category.Name}' vào category '{checkParent.Name}'" });
+                    }
+                    else
+                    {
+                        string query = $"INSERT INTO Category (ID, ParentID, Name, Priority, Image) VALUES('{Guid.NewGuid()}', null, N'{category.Name}', 0, N'{category.Image}')";
+                        conn.Execute(query);
+                        return Ok(new { code = 200, message = $"Đã thêm category gốc '{category.Name}'" });
+                    }
                 }
             }
             catch (Exception ex)

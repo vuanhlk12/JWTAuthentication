@@ -215,7 +215,7 @@ namespace JWTAuthentication.Controllers
 	                                    1 = 1
                                         {(userRoles.Contains(UserRoles.Admin) ? "" : $"AND bp.StoreID = '{store.ID}'")}
 	                                    {(fromDate != null ? $"AND b.OrderTime >= Convert(datetime, '{((DateTime)fromDate).ToString("yyyy-MM-dd")}' )" : "")}
-	                                    {(toDate != null ? $"AND b.OrderTime <= Convert(datetime, '{((DateTime)toDate).ToString("yyyy-MM-dd")}' )" : "")}
+	                                    {(toDate != null ? $"AND b.OrderTime <= Convert(datetime, '{(((DateTime)toDate).AddDays(1)).ToString("yyyy-MM-dd")}' )" : "")}
                                     GROUP BY
 	                                    p.CategoryID";
                     List<DonutGraph> graph = conn.Query<DonutGraph>(query).AsList();
@@ -267,7 +267,7 @@ namespace JWTAuthentication.Controllers
 	                                    1 = 1
                                         AND bp.StoreID = '{StoreID}'
 	                                    {(fromDate != null ? $"AND b.OrderTime >= Convert(datetime, '{((DateTime)fromDate).ToString("yyyy-MM-dd")}' )" : "")}
-	                                    {(toDate != null ? $"AND b.OrderTime <= Convert(datetime, '{((DateTime)toDate).ToString("yyyy-MM-dd")}' )" : "")}
+	                                    {(toDate != null ? $"AND b.OrderTime <= Convert(datetime, '{(((DateTime)toDate).AddDays(1)).ToString("yyyy-MM-dd")}' )" : "")}
                                     GROUP BY
 	                                    p.CategoryID";
                     List<DonutGraph> graph = conn.Query<DonutGraph>(query).AsList();

@@ -165,7 +165,7 @@ namespace JWTAuthentication.Controllers
                     var checkParent = conn.Query<CategoryModel>(check).FirstOrDefault();
                     if (checkParent == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tồn tại parentID này" });
 
-                    string query = $"INSERT INTO Category (ID, ParentID, Name, Priority) VALUES('{Guid.NewGuid()}', '{category.ParentID}', N'{category.Name}', 0)";
+                    string query = $"INSERT INTO Category (ID, ParentID, Name, Priority, Image) VALUES('{Guid.NewGuid()}', '{category.ParentID}', N'{category.Name}', 0, N'{category.Image}')";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Đã thêm category '{category.Name}' vào category '{checkParent.Name}'" });
                 }
@@ -211,7 +211,7 @@ namespace JWTAuthentication.Controllers
                     var oldCategory = conn.Query<CategoryModel>(check).FirstOrDefault();
                     if (oldCategory == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tồn tại category này" });
 
-                    string query = $"UPDATE Category SET ParentID='{oldCategory.ParentID}', Name=N'{category.Name}', Priority=0 WHERE ID='{oldCategory.Id}'";
+                    string query = $"UPDATE Category SET ParentID='{oldCategory.ParentID}', Name=N'{category.Name}', Priority=0, [Image]='{category.Image}' WHERE ID='{oldCategory.Id}'";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Sửa '{oldCategory.Name}' thành công" });
                 }

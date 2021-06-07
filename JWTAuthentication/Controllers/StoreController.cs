@@ -169,6 +169,30 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize(Roles = UserRoles.Seller)]
+        [HttpPost("UpdateStore")]
+        public async Task<IActionResult> UpdateStore([FromBody] StoreModel Store)
+        {
+            try
+            {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string checkStore = $"SELECT * FROM Store WHERE OwnerID ='{user.Id}'";
+                    var oldStore = conn.Query<StoreModel>(checkStore).FirstOrDefault();
+                    if (oldStore.Approved != 1) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Cửa hàng chưa được chấp thuận hoặc đang bị khóa" });
+
+                    string query = $"UPDATE Store SET Name=N'{Store.Name.Replace("'","''")}', Detail=N'{Store.Detail.Replace("'", "''")}' WHERE ID='{oldStore.ID}'";
+                    conn.Execute(query);
+                    return Ok(new { code = 200, message = $"Sửa cửa hàng {Store.Name} thành công" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra: " + ex.Message });
+            }
+        }
+
         [Authorize(Roles = UserRoles.Admin)]
         [HttpPost("ApproveStoreByAdmin")]
         public IActionResult ApproveStoreByAdmin(string StoreID)

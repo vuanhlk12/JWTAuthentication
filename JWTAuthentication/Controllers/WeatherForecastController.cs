@@ -50,22 +50,6 @@ namespace JWTAuthentication.Controllers
             .ToArray();
         }
 
-        [Authorize(Roles = UserRoles.Manager)]
-        [HttpGet("manager")]
-        public IEnumerable<WeatherForecast> GetManager()
-        {
-            var b = GlobalSettings.ConnectionStr;
-
-            var rng = new Random();
-            return Enumerable.Range(1, 2).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
-        }
-
         [HttpGet]
         public async Task<IEnumerable<WeatherForecast>> GetData()
         {

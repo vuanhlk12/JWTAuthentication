@@ -219,6 +219,7 @@ namespace JWTAuthentication.Controllers
                                     GROUP BY
 	                                    p.CategoryID";
                     List<DonutGraph> graph = conn.Query<DonutGraph>(query).AsList();
+                    if (graph.Count() == 0) return Ok(new { code = 200, data = new { series = new List<string> { "Không có mặt hàng nào" }, labels = new List<int> { 100 } } });
 
                     double sum = graph.Sum(p => p.value);
 
@@ -270,6 +271,8 @@ namespace JWTAuthentication.Controllers
                                     GROUP BY
 	                                    p.CategoryID";
                     List<DonutGraph> graph = conn.Query<DonutGraph>(query).AsList();
+                    if (graph.Count() == 0) return Ok(new { code = 200, data = new { series = new List<string> { "Không có mặt hàng nào" }, labels = new List<int> { 100 } } });
+
 
                     double sum = graph.Sum(p => p.value);
 

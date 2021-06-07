@@ -410,7 +410,10 @@ namespace JWTAuthentication.Controllers
         {
             var user = await userManager.FindByNameAsync(UserName);
             if (user == null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User not exists!" });
+                return StatusCode(StatusCodes.Status404NotFound, new { code = 404, Message = "User not exists!" });
+
+            var userRoles = await userManager.GetRolesAsync(user);
+            if (userRoles.Contains(UserRoles.Admin)) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, Message = "Người dùng này không thể cấp quyền seller" });
 
             await CreateRoleIfNotExist();
 

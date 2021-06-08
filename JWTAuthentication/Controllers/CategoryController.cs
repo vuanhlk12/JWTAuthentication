@@ -24,6 +24,33 @@ namespace JWTAuthentication.Controllers
     [Route("[controller]")]
     public class CategoryController : ControllerBase
     {
+        [HttpGet("CategoryAll")]
+        public IActionResult GetCategoryAll(int page = -1, int size = -1)
+        {
+            try
+            {
+
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    string query = $"SELECT * FROM Category";
+
+                    var category = conn.Query<CategoryModel>(query);
+
+                    if (page > -1 && size > -1) category = category.Skip(page * size).Take(size);
+
+                    return Ok(new
+                    {
+                        code = 200,
+                        Category = category
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
+            }
+        }
+
         [HttpGet("CategoryAllChildList")]
         public IActionResult GetCategory(string ParentID = null)
         {

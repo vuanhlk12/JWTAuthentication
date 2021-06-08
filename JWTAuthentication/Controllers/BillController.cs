@@ -36,28 +36,47 @@ namespace JWTAuthentication.Controllers
             _configuration = configuration;
         }
 
-        [Authorize]
-        [HttpGet("GetTransactions")]
-        public async Task<IActionResult> GetAllTransactionAsync(string userID = null)
+        //[Authorize]
+        //[HttpGet("GetTransactions")]
+        //public async Task<IActionResult> GetAllTransactionAsync(string userID = null)
+        //{
+        //    try
+        //    {
+        //        var user = await userManager.FindByNameAsync(User.Identity.Name);
+        //        using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+        //        {
+        //            string checkExist = $"SELECT * FROM AspNetUsers where Id = N'{user.Id}'";
+        //            string query = $"SELECT * FROM Bill where BuyerID = '{user.Id}'";
+        //            List<UserModel> users = conn.QueryAsync<UserModel>(checkExist).Result.AsList();
+        //            if (users.Count == 0)
+        //            {
+        //                return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User không tồn tại" });
+        //            }
+        //            else
+        //            {
+        //                List<BillModel> methods = conn.QueryAsync<BillModel>(query).Result.AsList();
+        //                if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
+        //                else return Ok(new { code = 200, detail = methods });
+        //            }
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra", detail = e.Message });
+        //    }
+        //}
+
+        [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
+        [HttpPost("SetStatusCancel")]
+        public IActionResult SetCancel(string transID)//method nay chi thang seller hay admin co the thuc hien
         {
             try
             {
-                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
-                    string checkExist = $"SELECT * FROM AspNetUsers where Id = N'{user.Id}'";
-                    string query = $"SELECT * FROM Bill where BuyerID = '{user.Id}'";
-                    List<UserModel> users = conn.QueryAsync<UserModel>(checkExist).Result.AsList();
-                    if (users.Count == 0)
-                    {
-                        return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User không tồn tại" });
-                    }
-                    else
-                    {
-                        List<BillModel> methods = conn.QueryAsync<BillModel>(query).Result.OrderByDescending(p => p.OrderTime).AsList();
-                        if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
-                        else return Ok(new { code = 200, detail = methods });
-                    }
+                    string setStatus = $"UPDATE Bill SET Status=2 WHERE ID='{transID}'";
+                    conn.Execute(setStatus);
+                    return Ok(new { code = 200, message = "Đã hủy thành công" });
                 }
             }
             catch (Exception e)

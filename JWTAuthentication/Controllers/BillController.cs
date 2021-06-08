@@ -54,7 +54,7 @@ namespace JWTAuthentication.Controllers
                     }
                     else
                     {
-                        List<BillModel> methods = conn.QueryAsync<BillModel>(query).Result.AsList();
+                        List<BillModel> methods = conn.QueryAsync<BillModel>(query).Result.OrderByDescending(p => p.OrderTime).AsList();
                         if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
                         else return Ok(new { code = 200, detail = methods });
                     }

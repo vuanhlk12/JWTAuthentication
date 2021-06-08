@@ -248,7 +248,7 @@ namespace JWTAuthentication.Controllers
                     var oldCategory = conn.Query<CategoryModel>(check).FirstOrDefault();
                     if (oldCategory == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tồn tại category này" });
 
-                    string query = $"UPDATE Category SET ParentID='{oldCategory.ParentID}', Name=N'{category.Name}', Priority=0, [Image]='{category.Image}' WHERE ID='{oldCategory.Id}'";
+                    string query = $"UPDATE Category SET Name=N'{category.Name}', Priority=0, [Image]='{category.Image}' WHERE ID='{oldCategory.Id}'";
                     conn.Execute(query);
                     return Ok(new { code = 200, message = $"Sửa '{oldCategory.Name}' thành công" });
                 }

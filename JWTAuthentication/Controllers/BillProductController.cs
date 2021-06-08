@@ -80,14 +80,14 @@ namespace JWTAuthentication.Controllers
                     }
                     else
                     {
-                        string delete = $"delete from BillProduct where BillID = N'{billID}'";
+                        //string delete = $"delete from BillProduct where BillID = N'{billID}'";
                         List<BillProductModel> billProduct = conn.QueryAsync<BillProductModel>(getProductlist).Result.AsList();
                         foreach(BillProductModel bp in billProduct)
                         {
                             string modify = $"Update Product set Quanlity = Quanlity + {bp.ProductQuantity} where id = N'{bp.ProductID}'";
                             conn.Execute(modify);
                         }
-                        conn.Execute(delete);
+                        //conn.Execute(delete);
                         return Ok(new { code = 200, message = "Hủy đơn thành công" });
                     }
                 }

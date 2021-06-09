@@ -303,7 +303,7 @@ namespace JWTAuthentication.Controllers
         //Vũ Anh thêm get trans cho store
         [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpGet("GetTransactionsStore")]
-        public IActionResult GetTransactionsStore(int size, int page, string StoreID, DateTime? fromDate = null, DateTime? toDate = null, int? status = null)
+        public IActionResult GetTransactionsStore(int size, int page, string StoreID, DateTime? fromDate = null, DateTime? toDate = null, int? status = null, DateTime? shipDate = null)
         {
             try
             {
@@ -391,6 +391,7 @@ namespace JWTAuthentication.Controllers
                         if (fromDate != null) results = results.Where(p => p.OrderTime >= fromDate).ToList();
                         if (toDate != null) results = results.Where(p => p.OrderTime <= ((DateTime)toDate).AddDays(1)).ToList();
                         if (status != null) results = results.Where(p => p.Status == status).ToList();
+                        if (shipDate != null) results = results.Where(p => (p.ShipTime <= ((DateTime)shipDate).AddDays(1) && p.ShipTime >= ((DateTime)shipDate))).ToList();
 
                         int total = results.Count;
 

@@ -324,6 +324,7 @@ namespace JWTAuthentication.Controllers
                                                b.ShipTime,
                                                b.AddressID,
                                                b.PaymentID,
+                                               b.Total,
                                                b.Status AS BillStatus,
                                                bp.ProductQuantity AS ProductQuantity,
                                                p.*
@@ -339,6 +340,7 @@ namespace JWTAuthentication.Controllers
                         List<BillProductModel> modyfiedList = (from method in methods
                                                                select new BillProductModel
                                                                {
+                                                                   ProductsTotal = method.Total,
                                                                    BillID = method.BillID,
                                                                    BuyerID = method.BuyerID,
                                                                    BuyerAccount = method.BuyerAccount,
@@ -370,7 +372,7 @@ namespace JWTAuthentication.Controllers
                                                                }).ToList();
 
                         var results = (modyfiedList.GroupBy(
-                                p => new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus, p.ShipTime, p.PaymentID },
+                                p => new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus, p.ShipTime, p.PaymentID, p.ProductsTotal },
                                 p => p.Product,
                                 (key, g) => new HistoryBillStoreModel
                                 {
@@ -382,6 +384,7 @@ namespace JWTAuthentication.Controllers
                                     AddressID = key.AddressID,
                                     Status = key.BillStatus,
                                     PaymentID = key.PaymentID,
+                                    ProductsTotal = key.ProductsTotal,
                                     Products = g.ToList()
                                 })).OrderByDescending(t => t.OrderTime).AsList();
 

@@ -9,6 +9,7 @@ namespace JWTAuthentication.Authentication
 {
     public class BillProductModel
     {
+        public int ProductsTotal { get; set; }
         public string ID { get; set; }
         public string BillID { get; set; }
         public string BuyerID { get; set; }
@@ -22,13 +23,13 @@ namespace JWTAuthentication.Authentication
         public string AddressID { get; set; }
         public int BillStatus { get; set; }
         public ProductModel Product { get; set; }
-        public int ProductsTotal
-        {
-            get
-            {
-                return Products.Sum(item => (int)(item.Quanlity * item.Price * (1 - (float)item.Discount / 100)));
-            }
-        }
+        //public int ProductsTotal
+        //{
+        //    get
+        //    {
+        //        return Products.Sum(item => (int)(item.Quanlity * item.Price * (1 - (float)item.Discount / 100)));
+        //    }
+        //}
         public string PaymentID { get; set; }
         
         public List<ProductModel> Products { get; set; }

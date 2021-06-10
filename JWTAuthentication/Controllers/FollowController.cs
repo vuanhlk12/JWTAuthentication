@@ -139,7 +139,7 @@ namespace JWTAuthentication.Controllers
                     {
                         List<StoreModel> stores = conn.QueryAsync<StoreModel>(querry).Result.AsList();
                         if (stores.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có cửa hàng nào đang follow" });
-                        return Ok(new { code = 200, message = stores });
+                        return Ok(new { code = 200, total = stores.Count(), message = stores });
                     }
                 }
             }

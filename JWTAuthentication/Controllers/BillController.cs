@@ -19,6 +19,8 @@ using Microsoft.Data.SqlClient;
 using Dapper;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Nancy.Json;
+
 namespace JWTAuthentication.Controllers
 {
     [ApiController]
@@ -463,27 +465,77 @@ namespace JWTAuthentication.Controllers
 
         [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpPost("SetStatusDelivered")]
-        public IActionResult SetDeliver(string transID)//method nay chi thang seller hay admin co the thuc hien
+        public async Task<IActionResult> SetDeliverAsync(string transID)//method nay chi thang seller hay admin co the thuc hien
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
+                    string storeQuery = $"SELECT * FROM Store where OwnerID ='{user.Id}'";
+                    StoreModel store = conn.Query<StoreModel>(storeQuery).FirstOrDefault();
 
                     string checkExist = $"SELECT * FROM Bill where ID = N'{transID}'";
-                    string setStatus = $"update bill set status = 1, shiptime = N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' where id = N'{transID}'";
-                    List<BillModel> trans = conn.QueryAsync<BillModel>(checkExist).Result.AsList();
-                    if (trans.Count == 0)
+                    BillModel trans = conn.QueryAsync<BillModel>(checkExist).Result.FirstOrDefault();
+
+                    if (trans == null)
                     {
                         return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Giao dịch không tồn tại" });
                     }
                     else
                     {
-                        if (trans.FirstOrDefault().Status == 1 || trans.FirstOrDefault().Status == 2) return StatusCode(StatusCodes.Status403Forbidden, new { code = 403, message = "Giao dịch đã kết thúc" });
+                        if (trans.Status == 1 || trans.Status == 2) return StatusCode(StatusCodes.Status403Forbidden, new { code = 403, message = "Giao dịch đã kết thúc" });
                         else
                         {
-                            conn.Execute(setStatus);
-                            return Ok(new { code = 200, message = "Xác nhận đơn hàng thành công" });
+                            string checkProductInBill = $@"SELECT p.*
+                                                        FROM
+	                                                        Bill b
+                                                        inner join BillProduct bp on
+	                                                        b.ID = bp.BillID
+                                                        inner join Product p on
+	                                                        bp.ProductID = p.ID
+                                                        WHERE
+	                                                        b.ID = '{transID}'";
+                            List<ProductModel> productsInBill = conn.Query<ProductModel>(checkProductInBill).AsList();
+                            List<ProductModel> productsInBillOfStore = productsInBill.Where(p => p.StoreID == store.ID).ToList();
+
+                            List<string> ShippedProductID = new JavaScriptSerializer().Deserialize<List<string>>(trans.ShippedProductID);
+                            if (ShippedProductID == null)
+                            {
+                                ShippedProductID = new List<string>();
+                                List<string> productsInBill_Ids = productsInBillOfStore.Select(p => p.ID).ToList();
+                                string jsonShippedID = new JavaScriptSerializer().Serialize(productsInBill_Ids);
+                                string updateShippedIDs = $"UPDATE Bill SET ShippedProductID='{jsonShippedID}' WHERE ID='{transID}'";
+                                conn.Execute(updateShippedIDs);
+                            }
+                            else
+                            {
+                                List<string> productsInBill_Ids = productsInBillOfStore.Select(p => p.ID).ToList();
+                                foreach (string Id in productsInBill_Ids)
+                                {
+                                    if (!ShippedProductID.Contains(Id))
+                                    {
+                                        ShippedProductID.Add(Id);
+                                    }
+                                }
+                                string jsonShippedID = new JavaScriptSerializer().Serialize(ShippedProductID);
+                                string updateShippedIDs = $"UPDATE Bill SET ShippedProductID='{jsonShippedID}' WHERE ID='{transID}'";
+                                conn.Execute(updateShippedIDs);
+                            }
+
+                            if (productsInBill.Count() == ShippedProductID.Count() )
+                            {
+                                string setStatus = $"update bill set status = 1, shiptime = N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' where id = N'{transID}'";
+                                conn.Execute(setStatus);
+                                return Ok(new { code = 200, message = "Xác nhận đơn hàng thành công, Đơn hàng đã được hoàn tất!" });
+                            }
+                            else
+                            {
+                                string setStatus = $"update bill set status = 3 where id = N'{transID}'";
+                                conn.Execute(setStatus);
+                                return Ok(new { code = 200, message = "Xác nhận đơn hàng thành công, Đang chờ cửa hàng khác hoàn thành đơn hàng!" });
+                            }
+
                         }
                     }
                 }

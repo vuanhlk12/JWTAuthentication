@@ -9,6 +9,7 @@ namespace JWTAuthentication.Authentication
 {
     public class BillProductModel
     {
+        public string ShippedProductID { get; set; }
         public int ProductsTotal { get; set; }
         public string ID { get; set; }
         public string BillID { get; set; }

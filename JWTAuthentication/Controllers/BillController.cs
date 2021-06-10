@@ -320,6 +320,7 @@ namespace JWTAuthentication.Controllers
                     else
                     {
                         string query = $@"SELECT b.ID AS BillID,
+                                               b.ShippedProductID,
                                                b.BuyerID AS BuyerID,
                                                anu.UserName AS BuyerAccount,
                                                b.OrderTime,
@@ -342,6 +343,7 @@ namespace JWTAuthentication.Controllers
                         List<BillProductModel> modyfiedList = (from method in methods
                                                                select new BillProductModel
                                                                {
+                                                                   ShippedProductID = method.ShippedProductID,
                                                                    ProductsTotal = method.Total,
                                                                    BillID = method.BillID,
                                                                    BuyerID = method.BuyerID,
@@ -374,10 +376,11 @@ namespace JWTAuthentication.Controllers
                                                                }).ToList();
 
                         var results = (modyfiedList.GroupBy(
-                                p => new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus, p.ShipTime, p.PaymentID, p.ProductsTotal },
+                                p => new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus, p.ShipTime, p.PaymentID, p.ProductsTotal, p.ShippedProductID },
                                 p => p.Product,
                                 (key, g) => new HistoryBillStoreModel
                                 {
+                                    ShippedProductID = key.ShippedProductID,
                                     BillID = key.BillID,
                                     BuyerID = key.BuyerID,
                                     BuyerAccount = key.BuyerAccount,

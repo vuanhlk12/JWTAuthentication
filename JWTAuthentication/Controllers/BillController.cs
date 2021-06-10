@@ -503,7 +503,7 @@ namespace JWTAuthentication.Controllers
                             if (productsInBillOfStore.Count == 0) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Bạn không có quyền xác nhận đơn hàng này" });
 
                             List<string> ShippedProductID = new JavaScriptSerializer().Deserialize<List<string>>(trans.ShippedProductID);
-                            if (ShippedProductID == null)// nếu chưa có product trong bill nào được xác nhận
+                            if (ShippedProductID == null || ShippedProductID.Count() == 0)// nếu chưa có product trong bill nào được xác nhận
                             {
                                 ShippedProductID = productsInBillOfStore.Select(p => p.ID).ToList();
                                 string jsonShippedID = new JavaScriptSerializer().Serialize(ShippedProductID);

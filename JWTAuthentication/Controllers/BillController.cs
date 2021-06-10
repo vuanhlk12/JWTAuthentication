@@ -504,9 +504,8 @@ namespace JWTAuthentication.Controllers
                             List<string> ShippedProductID = new JavaScriptSerializer().Deserialize<List<string>>(trans.ShippedProductID);
                             if (ShippedProductID == null)
                             {
-                                ShippedProductID = new List<string>();
-                                List<string> productsInBill_Ids = productsInBillOfStore.Select(p => p.ID).ToList();
-                                string jsonShippedID = new JavaScriptSerializer().Serialize(productsInBill_Ids);
+                                ShippedProductID = productsInBillOfStore.Select(p => p.ID).ToList();
+                                string jsonShippedID = new JavaScriptSerializer().Serialize(ShippedProductID);
                                 string updateShippedIDs = $"UPDATE Bill SET ShippedProductID='{jsonShippedID}' WHERE ID='{transID}'";
                                 conn.Execute(updateShippedIDs);
                             }

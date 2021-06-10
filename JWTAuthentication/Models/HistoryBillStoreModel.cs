@@ -26,6 +26,7 @@ namespace JWTAuthentication.Authentication
             {
                 List<string> ShippedProductIDs = new JavaScriptSerializer().Deserialize<List<string>>(ShippedProductID);
                 List<string> ProductIDsOfThisBill = Products.Select(p => p.ID).ToList();
+                if (ShippedProductIDs == null || ShippedProductIDs.Count() == 0) return false;
                 foreach (string id in ProductIDsOfThisBill)
                 {
                     if (!ShippedProductIDs.Contains(id)) return false;

@@ -162,19 +162,26 @@ namespace JWTAuthentication.Controllers
 
             if (user == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "User not found" });
 
-            var DeleteResult = await userManager.DeleteAsync(user);
-            if (DeleteResult.Succeeded)
+            try
             {
-                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                var DeleteResult = await userManager.DeleteAsync(user);
+                if (DeleteResult.Succeeded)
                 {
-                    string query = $"UPDATE Store SET Approved=2 WHERE OwnerID ='{user.Id}'";
-                    conn.Execute(query);
+                    using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                    {
+                        string query = $"UPDATE Store SET Approved=2 WHERE OwnerID ='{user.Id}'";
+                        conn.Execute(query);
+                    }
+                    return Ok(new { code = 200, message = $"Tài khoản {account} đã bị xóa, cửa hàng của tài khoản này đã bị cấm nếu có." });
                 }
-                return Ok(new { code = 200, message = $"Tài khoản {account} đã bị xóa, cửa hàng của tài khoản này đã bị cấm nếu có." });
+                else
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"Đã có lỗi: {DeleteResult.Errors.First().Description}" });
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"Đã có lỗi: {DeleteResult.Errors.First().Description}" });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = $"Không thể xóa tài khoản này! " });
             }
         }
 

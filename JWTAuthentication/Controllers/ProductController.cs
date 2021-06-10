@@ -109,6 +109,74 @@ namespace JWTAuthentication.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet("GetProductFollowing")]
+        public async Task<IActionResult> GetProductFollowingAsync(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue, string searchKey = null)
+        {
+            try
+            {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
+                using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
+                {
+                    CategoryModel category = new CategoryModel();
+                    string query;
+                    List<ProductModel> products;
+
+                    if (CategoryID != null)
+                    {
+                        CategoryController categoryController = new CategoryController();
+                        List<CategoryModel> categories = categoryController.GetCategoryAllChildList(CategoryID);
+                        string keyStr = "";
+
+                        if (categories.Count == 0)
+                        {
+                            keyStr = $"('{CategoryID}')";
+                        }
+                        else
+                        {
+                            keyStr = string.Join("','", categories.Select(item => item.Id.ToString()));
+                            keyStr = "('" + keyStr + "')";
+                        }
+
+                        string categoryQuery = $"SELECT  * FROM Category where ID ='{CategoryID}'";
+                        category = conn.Query<CategoryModel>(categoryQuery).FirstOrDefault();
+                        query = $"SELECT  p.* FROM Product p inner join Store s2 on p.StoreID = s2.ID INNER JOIN [Following] f on s2.id=f.StoreID WHERE f.UserID ='{user.Id}' AND CategoryID IN {keyStr}";
+                    }
+                    else
+                    {
+                        query = $"SELECT  p.* FROM Product p inner join Store s2 on p.StoreID = s2.ID INNER JOIN [Following] f on s2.id=f.StoreID WHERE f.UserID ='{user.Id}' AND 1=1 ";
+                    }
+
+                    if (star != 0) query += $"and Star >={star} and Star <{star + 1}";
+                    if (fromPrice > 0) query += $"and Price >={fromPrice}";
+                    if (toPrice < int.MaxValue) query += $"and Price <={toPrice}";
+
+
+                    //query = $"SELECT * FROM (SELECT ROW_NUMBER() OVER(ORDER BY id) RowNr, * {query} ) t WHERE RowNr BETWEEN {size * page + 1} AND {size * (page + 1)}";
+
+                    var listAll = conn.Query<ProductModel>(query).AsList();
+                    //if (StoreID != null)
+                    //{
+                    //    listAll = listAll.Where(p => p.StoreID == StoreID).ToList();
+                    //}
+
+                    if (searchKey != null)
+                    {
+                        listAll = SearchByName(listAll, searchKey);
+                    }
+
+                    int count = listAll.Count();
+                    products = listAll.OrderBy(p => p.ID).Skip(size * page).Take(size).AsList();
+
+                    category.ProductsList = products ?? new List<ProductModel>();
+                    return Ok(new { code = 200, total = count, message = category });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { code = 500, message = "Có lỗi đã xẩy ra " + ex.Message });
+            }
+        }
 
         [HttpGet("GetProductByCategoryIDbyRange")]
         public IActionResult GetProductByCategoryIDbyRange(int size, int page, string CategoryID = null, int star = 0, int fromPrice = 0, int toPrice = int.MaxValue, string searchKey = null, string StoreID = null)

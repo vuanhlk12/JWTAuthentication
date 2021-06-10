@@ -19,6 +19,8 @@ using Microsoft.Data.SqlClient;
 using Dapper;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Nancy.Json;
+
 namespace JWTAuthentication.Controllers
 {
     [ApiController]
@@ -54,7 +56,7 @@ namespace JWTAuthentication.Controllers
                     }
                     else
                     {
-                        List<BillModel> methods = conn.QueryAsync<BillModel>(query).Result.AsList();
+                        List<BillModel> methods = conn.QueryAsync<BillModel>(query).Result.OrderByDescending(p => p.OrderTime).AsList();
                         if (methods.Count == 0) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không có giao dich" });
                         else return Ok(new { code = 200, detail = methods });
                     }
@@ -303,7 +305,7 @@ namespace JWTAuthentication.Controllers
         //Vũ Anh thêm get trans cho store
         [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpGet("GetTransactionsStore")]
-        public IActionResult GetTransactionsStore(int size, int page, string StoreID, DateTime? fromDate = null, DateTime? toDate = null, int? status = null)
+        public IActionResult GetTransactionsStore(int size, int page, string StoreID, DateTime? fromDate = null, DateTime? toDate = null, int? status = null, DateTime? shipDate = null)
         {
             try
             {
@@ -318,6 +320,7 @@ namespace JWTAuthentication.Controllers
                     else
                     {
                         string query = $@"SELECT b.ID AS BillID,
+                                               b.ShippedProductID,
                                                b.BuyerID AS BuyerID,
                                                anu.UserName AS BuyerAccount,
                                                b.OrderTime,
@@ -340,6 +343,7 @@ namespace JWTAuthentication.Controllers
                         List<BillProductModel> modyfiedList = (from method in methods
                                                                select new BillProductModel
                                                                {
+                                                                   ShippedProductID = method.ShippedProductID,
                                                                    ProductsTotal = method.Total,
                                                                    BillID = method.BillID,
                                                                    BuyerID = method.BuyerID,
@@ -372,10 +376,11 @@ namespace JWTAuthentication.Controllers
                                                                }).ToList();
 
                         var results = (modyfiedList.GroupBy(
-                                p => new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus, p.ShipTime, p.PaymentID, p.ProductsTotal },
+                                p => new { p.BillID, p.BuyerID, p.BuyerAccount, p.OrderTime, p.AddressID, p.BillStatus, p.ShipTime, p.PaymentID, p.ProductsTotal, p.ShippedProductID },
                                 p => p.Product,
                                 (key, g) => new HistoryBillStoreModel
                                 {
+                                    ShippedProductID = key.ShippedProductID,
                                     BillID = key.BillID,
                                     BuyerID = key.BuyerID,
                                     BuyerAccount = key.BuyerAccount,
@@ -391,6 +396,7 @@ namespace JWTAuthentication.Controllers
                         if (fromDate != null) results = results.Where(p => p.OrderTime >= fromDate).ToList();
                         if (toDate != null) results = results.Where(p => p.OrderTime <= ((DateTime)toDate).AddDays(1)).ToList();
                         if (status != null) results = results.Where(p => p.Status == status).ToList();
+                        if (shipDate != null) results = results.Where(p => (p.ShipTime <= ((DateTime)shipDate).AddDays(1) && p.ShipTime >= ((DateTime)shipDate))).ToList();
 
                         int total = results.Count;
 
@@ -462,27 +468,79 @@ namespace JWTAuthentication.Controllers
 
         [Authorize(Roles = UserRoles.Admin + "," + UserRoles.Seller)]
         [HttpPost("SetStatusDelivered")]
-        public IActionResult SetDeliver(string transID)//method nay chi thang seller hay admin co the thuc hien
+        public async Task<IActionResult> SetDeliverAsync(string transID)//method nay chi thang seller hay admin co the thuc hien
         {
             try
             {
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
                 using (SqlConnection conn = new SqlConnection(GlobalSettings.ConnectionStr))
                 {
+                    string storeQuery = $"SELECT * FROM Store where OwnerID ='{user.Id}'";
+                    StoreModel store = conn.Query<StoreModel>(storeQuery).FirstOrDefault();
 
                     string checkExist = $"SELECT * FROM Bill where ID = N'{transID}'";
-                    string setStatus = $"update bill set status = 1, shiptime = N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' where id = N'{transID}'";
-                    List<BillModel> trans = conn.QueryAsync<BillModel>(checkExist).Result.AsList();
-                    if (trans.Count == 0)
+                    BillModel trans = conn.QueryAsync<BillModel>(checkExist).Result.FirstOrDefault();
+
+                    if (trans == null)
                     {
                         return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Giao dịch không tồn tại" });
                     }
                     else
                     {
-                        if (trans.FirstOrDefault().Status == 1 || trans.FirstOrDefault().Status == 2) return StatusCode(StatusCodes.Status403Forbidden, new { code = 403, message = "Giao dịch đã kết thúc" });
+                        if (trans.Status == 1 || trans.Status == 2) return StatusCode(StatusCodes.Status403Forbidden, new { code = 403, message = "Giao dịch đã kết thúc" });
                         else
                         {
-                            conn.Execute(setStatus);
-                            return Ok(new { code = 200, message = "Xác nhận đơn hàng thành công" });
+                            string checkProductInBill = $@"SELECT p.*
+                                                        FROM
+	                                                        Bill b
+                                                        inner join BillProduct bp on
+	                                                        b.ID = bp.BillID
+                                                        inner join Product p on
+	                                                        bp.ProductID = p.ID
+                                                        WHERE
+	                                                        b.ID = '{transID}'";
+                            List<ProductModel> productsInBill = conn.Query<ProductModel>(checkProductInBill).AsList();//danh sách id sản phẩm của đơn hàng
+                            List<ProductModel> productsInBillOfStore = productsInBill.Where(p => p.StoreID == store.ID).ToList();//danh sách id sản phẩm của cửa hàng trong đơn hàng này
+
+                            //nếu không có sản phẩm nào của cửa hàng trong đơn hàng này thì cửa hàng không có quyền thay đổi
+                            if (productsInBillOfStore.Count == 0) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Bạn không có quyền xác nhận đơn hàng này" });
+
+                            List<string> ShippedProductID = new JavaScriptSerializer().Deserialize<List<string>>(trans.ShippedProductID);
+                            if (ShippedProductID == null || ShippedProductID.Count() == 0)// nếu chưa có product trong bill nào được xác nhận
+                            {
+                                ShippedProductID = productsInBillOfStore.Select(p => p.ID).ToList();
+                                string jsonShippedID = new JavaScriptSerializer().Serialize(ShippedProductID);
+                                string updateShippedIDs = $"UPDATE Bill SET ShippedProductID='{jsonShippedID}' WHERE ID='{transID}'";
+                                conn.Execute(updateShippedIDs);
+                            }
+                            else
+                            {
+                                List<string> productsInBill_Ids = productsInBillOfStore.Select(p => p.ID).ToList();
+                                foreach (string Id in productsInBill_Ids)
+                                {
+                                    if (!ShippedProductID.Contains(Id))// kiểm tra xem đã có những id này trong những id đã ship hay chưa
+                                    {
+                                        ShippedProductID.Add(Id);
+                                    }
+                                }
+                                string jsonShippedID = new JavaScriptSerializer().Serialize(ShippedProductID);
+                                string updateShippedIDs = $"UPDATE Bill SET ShippedProductID='{jsonShippedID}' WHERE ID='{transID}'";
+                                conn.Execute(updateShippedIDs);
+                            }
+
+                            if (productsInBill.Count() == ShippedProductID.Count())//nếu số lượng id đã ship bằng số lượng product id có trong bill
+                            {
+                                string setStatus = $"update bill set status = 1, shiptime = N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' where id = N'{transID}'";
+                                conn.Execute(setStatus);
+                                return Ok(new { code = 200, message = "Xác nhận đơn hàng thành công, Đơn hàng đã được hoàn tất!" });
+                            }
+                            else
+                            {
+                                string setStatus = $"update bill set status = 3 where id = N'{transID}'";
+                                conn.Execute(setStatus);
+                                return Ok(new { code = 200, message = "Xác nhận đơn hàng thành công, Đang chờ cửa hàng khác hoàn thành đơn hàng!" });
+                            }
+
                         }
                     }
                 }

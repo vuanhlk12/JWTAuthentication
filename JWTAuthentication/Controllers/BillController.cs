@@ -499,6 +499,8 @@ namespace JWTAuthentication.Controllers
                             List<ProductModel> productsInBill = conn.Query<ProductModel>(checkProductInBill).AsList();
                             List<ProductModel> productsInBillOfStore = productsInBill.Where(p => p.StoreID == store.ID).ToList();
 
+                            if (productsInBillOfStore.Count == 0) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Bạn không có quyền xác nhận đơn hàng này" });
+
                             List<string> ShippedProductID = new JavaScriptSerializer().Deserialize<List<string>>(trans.ShippedProductID);
                             if (ShippedProductID == null)
                             {
@@ -523,7 +525,7 @@ namespace JWTAuthentication.Controllers
                                 conn.Execute(updateShippedIDs);
                             }
 
-                            if (productsInBill.Count() == ShippedProductID.Count() )
+                            if (productsInBill.Count() == ShippedProductID.Count())
                             {
                                 string setStatus = $"update bill set status = 1, shiptime = N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' where id = N'{transID}'";
                                 conn.Execute(setStatus);

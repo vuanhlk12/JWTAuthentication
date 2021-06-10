@@ -496,13 +496,14 @@ namespace JWTAuthentication.Controllers
 	                                                        bp.ProductID = p.ID
                                                         WHERE
 	                                                        b.ID = '{transID}'";
-                            List<ProductModel> productsInBill = conn.Query<ProductModel>(checkProductInBill).AsList();
-                            List<ProductModel> productsInBillOfStore = productsInBill.Where(p => p.StoreID == store.ID).ToList();
+                            List<ProductModel> productsInBill = conn.Query<ProductModel>(checkProductInBill).AsList();//danh sách id sản phẩm của đơn hàng
+                            List<ProductModel> productsInBillOfStore = productsInBill.Where(p => p.StoreID == store.ID).ToList();//danh sách id sản phẩm của cửa hàng trong đơn hàng này
 
+                            //nếu không có sản phẩm nào của cửa hàng trong đơn hàng này thì cửa hàng không có quyền thay đổi
                             if (productsInBillOfStore.Count == 0) return StatusCode(StatusCodes.Status406NotAcceptable, new { code = 406, message = "Bạn không có quyền xác nhận đơn hàng này" });
 
                             List<string> ShippedProductID = new JavaScriptSerializer().Deserialize<List<string>>(trans.ShippedProductID);
-                            if (ShippedProductID == null)
+                            if (ShippedProductID == null)// nếu chưa có product trong bill nào được xác nhận
                             {
                                 ShippedProductID = productsInBillOfStore.Select(p => p.ID).ToList();
                                 string jsonShippedID = new JavaScriptSerializer().Serialize(ShippedProductID);
@@ -514,7 +515,7 @@ namespace JWTAuthentication.Controllers
                                 List<string> productsInBill_Ids = productsInBillOfStore.Select(p => p.ID).ToList();
                                 foreach (string Id in productsInBill_Ids)
                                 {
-                                    if (!ShippedProductID.Contains(Id))
+                                    if (!ShippedProductID.Contains(Id))// kiểm tra xem đã có những id này trong những id đã ship hay chưa
                                     {
                                         ShippedProductID.Add(Id);
                                     }
@@ -524,7 +525,7 @@ namespace JWTAuthentication.Controllers
                                 conn.Execute(updateShippedIDs);
                             }
 
-                            if (productsInBill.Count() == ShippedProductID.Count())
+                            if (productsInBill.Count() == ShippedProductID.Count())//nếu số lượng id đã ship bằng số lượng product id có trong bill
                             {
                                 string setStatus = $"update bill set status = 1, shiptime = N'{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' where id = N'{transID}'";
                                 conn.Execute(setStatus);

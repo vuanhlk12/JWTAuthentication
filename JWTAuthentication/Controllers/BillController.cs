@@ -83,11 +83,13 @@ namespace JWTAuthentication.Controllers
 
                     string query = $@"SELECT
 	                                    CAST(b.OrderTime AS DATE) as date,
-	                                    SUM(b.Total) as value
+	                                    SUM(p.Price*(100-p.Discount) / 100) as value
                                     FROM
 	                                    Bill b
                                     inner join BillProduct bp on
 	                                    b.ID = bp.BillID
+                                    inner join Product p on
+	                                    bp.ProductID = p.ID
                                     {(userRoles.Contains(UserRoles.Admin) ? "" : @$"WHERE bp.StoreID = '{store.ID}'")}
                                     GROUP BY
 	                                    CAST(b.OrderTime AS DATE)";

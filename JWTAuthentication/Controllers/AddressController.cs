@@ -142,13 +142,13 @@ namespace JWTAuthentication.Controllers
 
                     if (_address == null)
                     {
-                        string query = $"INSERT INTO Address (ID, Address, Phone, UserID, DistrictID, IsDefault) VALUES('{Guid.NewGuid()}', '{address.Address}', '{address.Phone}', '{address.UserID}', '{address.DistrictID}', 1)";
+                        string query = $"INSERT INTO Address (ID, Address, Phone, UserID, DistrictID, IsDefault) VALUES('{Guid.NewGuid()}', N'{address.Address}', '{address.Phone}', '{address.UserID}', '{address.DistrictID}', 1)";
                         conn.Execute(query);
                         return Ok(new { code = 200, message = "Thêm địa chỉ và đặt địa chỉ làm mặc định thành công" });
                     }
                     else
                     {
-                        string query = $"INSERT INTO Address (ID, Address, Phone, UserID, DistrictID, IsDefault) VALUES('{Guid.NewGuid()}', '{address.Address}', '{address.Phone}', '{address.UserID}', '{address.DistrictID}', 0)";
+                        string query = $"INSERT INTO Address (ID, Address, Phone, UserID, DistrictID, IsDefault) VALUES('{Guid.NewGuid()}', N'{address.Address}', '{address.Phone}', '{address.UserID}', '{address.DistrictID}', 0)";
                         conn.Execute(query);
                         return Ok(new { code = 200, message = "Thêm địa chỉ thành công" });
                     }
@@ -172,7 +172,7 @@ namespace JWTAuthentication.Controllers
 
                     if (oldAddress == null) return StatusCode(StatusCodes.Status404NotFound, new { code = 404, message = "Không tìm thấy Address" });
 
-                    string updateQuery = $"UPDATE Address SET Address='{address.Address}', Phone='{address.Phone}', UserID='{oldAddress.UserID}', DistrictID='{address.DistrictID}', IsDefault={oldAddress.IsDefault} WHERE ID='{address.ID}'";
+                    string updateQuery = $"UPDATE Address SET Address=N'{address.Address}', Phone='{address.Phone}', UserID='{oldAddress.UserID}', DistrictID='{address.DistrictID}', IsDefault={oldAddress.IsDefault} WHERE ID='{address.ID}'";
                     conn.Execute(updateQuery);
 
                     return Ok(new { code = 200, message = "Update địa chỉ thành công" });

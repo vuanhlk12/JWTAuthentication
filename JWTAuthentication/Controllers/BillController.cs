@@ -83,7 +83,7 @@ namespace JWTAuthentication.Controllers
 
                     string query = $@"SELECT
 	                                    CAST(b.OrderTime AS DATE) as date,
-	                                    SUM(p.Price*(100-p.Discount) / 100) as value
+	                                    SUM(p.Price) as value
                                     FROM
 	                                    Bill b
                                     inner join BillProduct bp on
@@ -144,7 +144,7 @@ namespace JWTAuthentication.Controllers
                 {
                     string query = $@"SELECT
 	                                    CAST(b.OrderTime AS DATE) as date,
-	                                    SUM(b.Total) as value
+	                                    SUM(p.Price) as value
                                     FROM
 	                                    Bill b
                                     inner join BillProduct bp on
@@ -208,7 +208,7 @@ namespace JWTAuthentication.Controllers
 
                     string query = $@"SELECT
 	                                    p.CategoryID ,
-	                                    SUM(b.Total) as value
+	                                    SUM(p.Price) as value
                                     FROM
 	                                    Bill b
                                     inner join BillProduct bp on
@@ -260,7 +260,7 @@ namespace JWTAuthentication.Controllers
                 {
                     string query = $@"SELECT
 	                                    p.CategoryID ,
-	                                    SUM(b.Total) as value
+	                                    SUM(p.Price) as value
                                     FROM
 	                                    Bill b
                                     inner join BillProduct bp on

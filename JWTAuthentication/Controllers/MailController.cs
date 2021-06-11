@@ -58,7 +58,7 @@ namespace JWTAuthentication.Controllers
                 mail.From = new MailAddress("tikitokodut@gmail.com");
                 mail.To.Add(user.Email);
                 mail.Subject = "Reset Password";
-                mail.Body = $"Đường link reset password:\nhttps://clientdeploy.web.app/resest-password?userName={userName}&token={HttpUtility.UrlEncode(token)}\n\nhttp://localhost:3001/resest-password?userName={userName}&token={HttpUtility.UrlEncode(token)}";
+                mail.Body = $"Đường link reset password:\nhttps://clientdeploy.web.app/resest-password?userName={userName}&token={HttpUtility.UrlEncode(token)}\n\nhttp://localhost:3001/resest-password?userName={userName}&token={HttpUtility.UrlEncode(token)}\n\nhttp://localhost:3000/resest-password?userName={userName}&token={HttpUtility.UrlEncode(token)}";
 
                 SmtpServer.Port = 587;
                 SmtpServer.Credentials = new System.Net.NetworkCredential("tikitokodut", "vuanh123");

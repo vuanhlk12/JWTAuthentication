@@ -1,5 +1,6 @@
 ﻿-- DROP SCHEMA dbo;
 
+CREATE SCHEMA dbo;
 -- db_a743ce_vuanhlk15.dbo.AspNetRoles definition
 
 -- Drop table
@@ -186,7 +187,7 @@ CREATE TABLE Category (
 	ParentID nvarchar(450) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	Name nvarchar(450) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	Priority int NULL,
-	Image nvarchar(MAX) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[Image] nvarchar(MAX) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	CONSTRAINT Category_PK PRIMARY KEY (ID),
 	CONSTRAINT Category_FK FOREIGN KEY (ParentID) REFERENCES Category(ID)
 );
@@ -282,6 +283,7 @@ CREATE TABLE Bill (
 	Status int NOT NULL,
 	AddressID nvarchar(450) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	PaymentID nvarchar(450) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	ShippedProductID nvarchar(MAX) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	CONSTRAINT Bill_PK PRIMARY KEY (ID),
 	CONSTRAINT Bill_FK FOREIGN KEY (BuyerID) REFERENCES AspNetUsers(Id),
 	CONSTRAINT Bill_FK_1 FOREIGN KEY (PaymentID) REFERENCES Payment(ID),
@@ -323,7 +325,7 @@ CREATE TABLE Product (
 	CategoryID nvarchar(450) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	Discount int NULL,
 	Quanlity int NULL,
-	Image nvarchar(MAX) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[Image] nvarchar(MAX) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	AddedTime datetime2(7) NOT NULL,
 	LastModify datetime2(7) NOT NULL,
 	StoreID nvarchar(450) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
@@ -346,7 +348,7 @@ CREATE TABLE Rating (
 	ID nvarchar(450) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	Comment nvarchar(1000) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	Star int NULL,
-	Image nvarchar(MAX) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[Image] nvarchar(MAX) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	[Time] datetime2(7) NULL,
 	ProductID nvarchar(450) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	UserID nvarchar(450) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
@@ -388,7 +390,7 @@ CREATE TABLE BillProduct (
 	StoreID nvarchar(450) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	CONSTRAINT BillProduct_PK PRIMARY KEY (ID),
 	CONSTRAINT BillProduct_FK FOREIGN KEY (ProductID) REFERENCES Product(ID),
-	CONSTRAINT BillProduct_FK_1 FOREIGN KEY (BillID) REFERENCES Bill(ID)
+	CONSTRAINT BillProduct_FK_1 FOREIGN KEY (BillID) REFERENCES Bill(ID) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 

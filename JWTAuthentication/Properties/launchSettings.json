@@ -20,10 +20,10 @@
     "JWTAuthentication": {
       "commandName": "Project",
       "launchUrl": "weatherforecast",
+      "applicationUrl": "http://localhost:2222",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "http://localhost:2222"
+      }
     }
   }
 }
